@@ -1,2 +1,2 @@
 # cave
-A code interpreter written in pure C.
+A code interpreter / compiler (not yet decided) written in pure C.
