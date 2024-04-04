@@ -1,15 +1,17 @@
-CC := gcc
+CC := clang
 PROJECT := cave
 CFLAGS := -Wall -Wextra -Werror -Wpedantic
-# CFLAGS += `llvm-config --cflags`
-# LDFLAGS := `llvm-config --ldflags`
-# LIBS := `llvm-config --libs`
+# LLVM stuff
+CFLAGS += `llvm-config --cflags`
+LDFLAGS := `llvm-config --ldflags`
+LIBS := `llvm-config --libs`
+
 INCLUDES := -Iinclude
 SRC_DIR := src
 SRC := $(wildcard $(SRC_DIR)/*.c)
 BUILD_DIR := build
 OBJ := $(SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
-.PHONY: all build run clean
+.PHONY: all build clean
 
 all: build
 

@@ -1,8 +1,10 @@
 #include "debug.h"
 
+#include "codegen.h"
 #include "lexer.h"
 #include "parser.h"
 
+#include <llvm-c/Core.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,7 +38,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    clock_t start_time, end_time;
+    clock_t start_time;
     start_time = clock();
 
     FILE *fs = fopen(path, "r");
@@ -79,18 +81,11 @@ int main(int argc, char **argv) {
     }
     free(buf);
 
-    end_time = clock();
-
     double time_elapsed =
-        ((double)(end_time - start_time)) / CLOCKS_PER_SEC * 1000;
+        ((double)(clock() - start_time)) / CLOCKS_PER_SEC * 1000;
     char lexing_msg[64];
     sprintf(lexing_msg, "lexing done in %.3lfms", time_elapsed);
     success(lexing_msg);
-
-    // print out the tokens
-    /* for (int i = 0; tokens[i - 1].type != TT_EOF; i++) { */
-    /*     printf("%s: \"%s\"\n", ttostr(tokens[i].type), tokens[i].lexeme); */
-    /* } */
 
     start_time = clock();
 
@@ -104,14 +99,48 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    end_time = clock();
-    time_elapsed = ((double)(end_time - start_time)) / CLOCKS_PER_SEC * 1000;
+    free_tokens(tokens);
+
+    time_elapsed = ((double)(clock() - start_time)) / CLOCKS_PER_SEC * 1000;
     char parsing_msg[64];
     sprintf(parsing_msg, "parsing done in %.3lfms", time_elapsed);
     success(parsing_msg);
 
+    start_time = clock();
+
+    LLVMBackend backend = backend_new(stmts);
+    backend.generate_IR(&backend);
+
+    char *ir = LLVMPrintModuleToString(backend.module);
+
     free(stmts);
-    free_tokens(tokens);
+
+    free_backend(backend);
+
+    time_elapsed = ((double)(clock() - start_time)) / CLOCKS_PER_SEC * 1000;
+    char IR_gen_msg[64];
+    sprintf(IR_gen_msg, "IR generation done in %.3lfms", time_elapsed);
+    success(IR_gen_msg);
+
+    FILE *out = fopen("cave.ll", "w");
+    if (!out) {
+        error("failed to open file");
+        return 1;
+    }
+    fputs(ir, out);
+    fclose(out);
+
+    /* system("llc -filetype=obj cave.ll -o cave.o"); */
+    if (system("llc -filetype=obj cave.ll -o cave.o") != 0) {
+        error("llc failed");
+        return 1;
+    }
+    remove("cave.ll");
+    if (system("clang cave.o -o a.out") != 0) {
+        error("clang failed");
+        return 1;
+    }
+    remove("cave.o");
 
     return 0;
 }

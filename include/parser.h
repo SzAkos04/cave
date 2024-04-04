@@ -47,15 +47,18 @@ typedef struct Stmt {
     enum {
         STMT_EXPR,
         STMT_BLOCK,
-        STMT_EXIT,
+        STMT_FN,
+        STMT_EOF,
         STMT_ERR = 255,
     } type;
     union {
         Expr Expression;
         struct Stmt *Block;
         struct {
-            Literal code;
-        } Exit;
+            char *name;
+            Token *arguments;
+            struct Stmt *stmts;
+        } Fn;
     } data;
 } Stmt;
 

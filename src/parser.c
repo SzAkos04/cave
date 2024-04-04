@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX_ARGS 32
+
 #define INITIAL_STMTS 4
 #define GROW_FACTOR 2
 
@@ -15,39 +17,53 @@ char *stmttostr(Stmt s) {
         return "EXPR";
     case STMT_BLOCK:
         return "BLOCK";
-    case STMT_EXIT:
-        return "EXIT";
+    case STMT_FN:
+        return "FN";
+    case STMT_EOF:
+        return "EOF";
     default:
         return "UNKNOWN";
     }
 }
 
-static Literal parse_literal(Parser *self) {
-    Token token = self->tokens[self->current];
-    Literal literal;
+static Stmt parse_stmt(Parser *self);
 
-    switch (token.type) {
-    case TT_NUMBER:
-        literal.Integer = strtol(token.lexeme, NULL, 10);
-        break;
-    default:
-        error("parsing literals not yet implemented");
-        literal.null = NULL;
-    }
+/* static Literal parse_literal(Parser *self) { */
+/*     Token token = self->tokens[self->current]; */
+/*     Literal literal; */
 
-    return literal;
-}
+/*     switch (token.type) { */
+/*     case TT_NUMBER: */
+/*         literal.Integer = strtol(token.lexeme, NULL, 10); */
+/*         break; */
+/*     default: */
+/*         error("parsing literals not yet implemented"); */
+/*         literal.null = NULL; */
+/*     } */
 
-static Stmt parse_exit(Parser *self) {
+/*     return literal; */
+/* } */
+
+static Stmt parse_fn(Parser *self) {
     char error_msg[64];
-    if (self->tokens[self->current].type != TT_EXIT) {
-        sprintf(error_msg, "expected `exit` keyword at line %i, found %s",
+    if (self->tokens[self->current].type != TT_FN) {
+        sprintf(error_msg, "expected `fn` keyword at line %i, found %s",
                 self->tokens[self->current].line,
                 ttostr(self->tokens[self->current].type));
         error(error_msg);
         return (Stmt){.type = STMT_ERR};
     }
-    self->current++; // consume `exit`
+    self->current++; // consume `fn`
+
+    if (self->tokens[self->current].type != TT_IDENTIFIER) {
+        sprintf(error_msg, "expected identifier at line %i, found %s",
+                self->tokens[self->current].line,
+                ttostr(self->tokens[self->current].type));
+        error(error_msg);
+        return (Stmt){.type = STMT_ERR};
+    }
+    char *name = self->tokens[self->current].lexeme;
+    self->current++; // consume identifier
 
     if (self->tokens[self->current].type != TT_LEFT_PAREN) {
         sprintf(error_msg, "expected `(` at line %i, found %s",
@@ -58,8 +74,13 @@ static Stmt parse_exit(Parser *self) {
     }
     self->current++; // consume `(`
 
-    Literal literal = parse_literal(self);
-    self->current++; // consume literal
+    int start = self->current;
+    Token arguments[MAX_ARGS];
+    for (; self->tokens[self->current].type != TT_RIGHT_PAREN;
+         self->current++) {
+        arguments[self->current - start] = self->tokens[self->current];
+    }
+    /* int argument_num = self->current - start; */
 
     if (self->tokens[self->current].type != TT_RIGHT_PAREN) {
         sprintf(error_msg, "expected `)` at line %i, found %s",
@@ -70,26 +91,43 @@ static Stmt parse_exit(Parser *self) {
     }
     self->current++; // consume `)`
 
-    if (self->tokens[self->current].type != TT_SEMICOLON) {
-        sprintf(error_msg, "expected `;` at line %i, found %s",
+    if (self->tokens[self->current].type != TT_LEFT_BRACE) {
+        sprintf(error_msg, "expected `{` at line %i, found %s",
                 self->tokens[self->current].line,
                 ttostr(self->tokens[self->current].type));
         error(error_msg);
         return (Stmt){.type = STMT_ERR};
     }
-    self->current++; // consume `;`
+    self->current++; // consume `{`
+
+    start = self->current;
+    Stmt stmts[MAX_STMTS]; // TODO: change this
+    for (; self->tokens[self->current].type != TT_RIGHT_BRACE;
+         self->current++) {
+        parse_stmt(self);
+    }
+
+    if (self->tokens[self->current].type != TT_RIGHT_BRACE) {
+        sprintf(error_msg, "expected `}` at line %i, found %s",
+                self->tokens[self->current].line,
+                ttostr(self->tokens[self->current].type));
+        error(error_msg);
+        return (Stmt){.type = STMT_ERR};
+    }
+    self->current++; // consume `}`
 
     return (Stmt){
-        .type = STMT_EXIT,
-        .data.Exit.code = literal,
-    };
+        .type = STMT_FN,
+        .data.Fn = {.name = name, .arguments = arguments, .stmts = stmts}};
 }
 
 static Stmt parse_stmt(Parser *self) {
     Token token = self->tokens[self->current];
     switch (token.type) {
-    case TT_EXIT:
-        return parse_exit(self);
+    case TT_FN:
+        return parse_fn(self);
+    case TT_EOF:
+        return (Stmt){.type = STMT_EOF};
     default:
         error("not yet implemented");
         return (Stmt){.type = STMT_ERR};
@@ -105,7 +143,9 @@ static Stmt *parser_parse(Parser *self) {
     }
 
     int i = 0;
-    while (i < MAX_STMTS && self->tokens[self->current].type != TT_EOF) {
+    /* while (i < MAX_STMTS && self->tokens[self->current - 2].type != TT_EOF) {
+     */
+    do {
         if (i >= capacity) {
             capacity *= GROW_FACTOR;
             Stmt *temp = realloc(stmts, sizeof(Stmt) * capacity);
@@ -122,7 +162,7 @@ static Stmt *parser_parse(Parser *self) {
             return NULL;
         }
         i++;
-    }
+    } while (i < MAX_STMTS && stmts[i - 1].type != STMT_EOF);
 
     // print out the statement types
     /* for (int j = 0; j < i; j++) { */

@@ -1,1 +1,8 @@
 -Iinclude
+-I/home/szakos/llvm-project/llvm/include
+-I/home/szakos/llvm-project/build/include
+-D_GNU_SOURCE
+-D__STDC_CONSTANT_MACROS
+-D__STDC_FORMAT_MACROS
+-D__STDC_LIMIT_MACROS
+-L/home/szakos/llvm-project/build/lib
