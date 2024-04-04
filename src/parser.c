@@ -8,7 +8,7 @@
 #define INITIAL_STMTS 4
 #define GROW_FACTOR 2
 
-Stmt parse_exit(Parser *self) {
+static Stmt parse_exit(Parser *self) {
     char error_msg[64];
     if (self->tokens[self->current].type != TT_EXIT) {
         sprintf(error_msg, "expected `exit` keyword at line %i",
