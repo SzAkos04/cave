@@ -2,14 +2,46 @@
 #include "lexer.h"
 #include "parser.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #define INITIAL_STMTS 4
 #define GROW_FACTOR 2
 
 Stmt parse_exit(Parser *self) {
-    (void)self;
-    return (Stmt){0};
+    char error_msg[64];
+    if (self->tokens[self->current].type != TT_EXIT) {
+        sprintf(error_msg, "expected `exit` keyword at line %i",
+                self->tokens[self->current].line);
+        error(error_msg);
+        return (Stmt){0};
+    }
+    self->current++; // consume `exit`
+
+    if (self->tokens[self->current].type != TT_LEFT_PAREN) {
+        sprintf(error_msg, "expected `(` at line %i",
+                self->tokens[self->current].line);
+        error(error_msg);
+        return (Stmt){0};
+    }
+    self->current++; // consume `(`
+
+    // TODO: Parse literal
+    Literal literal = (Literal){0};
+    self->current++;
+
+    if (self->tokens[self->current].type != TT_RIGHT_PAREN) {
+        sprintf(error_msg, "expected `)` at line %i",
+                self->tokens[self->current].line);
+        error(error_msg);
+        return (Stmt){0};
+    }
+    self->current++; // consume `)`
+
+    return (Stmt){
+        .type = EXIT_STMT,
+        .data.Exit.code = literal,
+    };
 }
 
 static Stmt parse_stmt(Parser *self) {
@@ -18,7 +50,7 @@ static Stmt parse_stmt(Parser *self) {
     case TT_EXIT:
         return parse_exit(self);
     default:
-        error("not yet implemented");
+        /* error("not yet implemented"); */
         return (Stmt){0};
     }
 
