@@ -9,6 +9,19 @@
 #define INITIAL_STMTS 4
 #define GROW_FACTOR 2
 
+char *stmttostr(Stmt s) {
+    switch (s.type) {
+    case STMT_EXPR:
+        return "EXPR";
+    case STMT_BLOCK:
+        return "BLOCK";
+    case STMT_EXIT:
+        return "EXIT";
+    default:
+        return "UNKNOWN";
+    }
+}
+
 static Literal parse_literal(Parser *self) {
     Token token = self->tokens[self->current];
     Literal literal;
@@ -111,11 +124,10 @@ static Stmt *parser_parse(Parser *self) {
         i++;
     }
 
-    printf("%i statements\n", i);
-
-    for (int j = 0; j < i; j++) {
-        printf("%s\n", stmttostr(stmts[j]));
-    }
+    // print out the statement types
+    /* for (int j = 0; j < i; j++) { */
+    /*     printf("%s\n", stmttostr(stmts[j])); */
+    /* } */
 
     Stmt *temp = realloc(stmts, sizeof(Stmt) * (i + 1));
     if (!temp) {
@@ -135,17 +147,4 @@ Parser parser_new(Token *tokens) {
 
         .parse = parser_parse,
     };
-}
-
-char *stmttostr(Stmt s) {
-    switch (s.type) {
-    case STMT_EXPR:
-        return "EXPR";
-    case STMT_BLOCK:
-        return "BLOCK";
-    case STMT_EXIT:
-        return "EXIT";
-    default:
-        return "UNKNOWN";
-    }
 }

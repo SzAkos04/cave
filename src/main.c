@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
     double time_elapsed =
         ((double)(end_time - start_time)) / CLOCKS_PER_SEC * 1000;
     char lexing_msg[64];
-    sprintf(lexing_msg, "lexing done in %.3lf ms", time_elapsed);
+    sprintf(lexing_msg, "lexing done in %.3lfms", time_elapsed);
     success(lexing_msg);
 
     // print out the tokens
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
     end_time = clock();
     time_elapsed = ((double)(end_time - start_time)) / CLOCKS_PER_SEC * 1000;
     char parsing_msg[64];
-    sprintf(parsing_msg, "parsing done in %.3lf ms", time_elapsed);
+    sprintf(parsing_msg, "parsing done in %.3lfms", time_elapsed);
     success(parsing_msg);
 
     free(stmts);

@@ -22,8 +22,9 @@ char *ttostr(TokenType t) {
         return "EOF";
     case TT_UNKNOWN:
         return "UNKNOWN";
+    default:
+        return NULL;
     }
-    return NULL;
 }
 
 static Token next(Lexer *self) {
