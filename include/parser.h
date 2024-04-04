@@ -17,11 +17,11 @@ typedef union {
 
 typedef struct Expr {
     enum {
-        UNARY_EXPR,
-        BINARY_EXPR,
-        LITERAL_EXPR,
-        VARIABLE_EXPR,
-        ASSIGNMENT_EXPR,
+        EXPR_UNARY,
+        EXPR_BINARY,
+        EXPR_LITERAL,
+        EXPR_VARIABLE,
+        EXPR_ASSIGNMENT,
     } type;
     union {
         struct {
@@ -45,9 +45,10 @@ typedef struct Expr {
 
 typedef struct Stmt {
     enum {
-        EXPR_STMT,
-        BLOCK_STMT,
-        EXIT_STMT,
+        STMT_EXPR,
+        STMT_BLOCK,
+        STMT_EXIT,
+        STMT_ERR = 255,
     } type;
     union {
         Expr Expression;
@@ -66,3 +67,5 @@ typedef struct Parser {
 } Parser;
 
 Parser parser_new(Token *tokens);
+
+char *stmttostr(Stmt);

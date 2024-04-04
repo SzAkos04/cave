@@ -4,42 +4,70 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define INITIAL_STMTS 4
 #define GROW_FACTOR 2
 
+static Literal parse_literal(Parser *self) {
+    Token token = self->tokens[self->current];
+    Literal literal;
+
+    switch (token.type) {
+    case TT_NUMBER:
+        literal.Integer = strtol(token.lexeme, NULL, 10);
+        break;
+    default:
+        error("parsing literals not yet implemented");
+        literal.null = NULL;
+    }
+
+    return literal;
+}
+
 static Stmt parse_exit(Parser *self) {
     char error_msg[64];
     if (self->tokens[self->current].type != TT_EXIT) {
-        sprintf(error_msg, "expected `exit` keyword at line %i",
-                self->tokens[self->current].line);
+        sprintf(error_msg, "expected `exit` keyword at line %i, found %s",
+                self->tokens[self->current].line,
+                ttostr(self->tokens[self->current].type));
         error(error_msg);
-        return (Stmt){0};
+        return (Stmt){.type = STMT_ERR};
     }
     self->current++; // consume `exit`
 
     if (self->tokens[self->current].type != TT_LEFT_PAREN) {
-        sprintf(error_msg, "expected `(` at line %i",
-                self->tokens[self->current].line);
+        sprintf(error_msg, "expected `(` at line %i, found %s",
+                self->tokens[self->current].line,
+                ttostr(self->tokens[self->current].type));
         error(error_msg);
-        return (Stmt){0};
+        return (Stmt){.type = STMT_ERR};
     }
     self->current++; // consume `(`
 
-    // TODO: Parse literal
-    Literal literal = (Literal){0};
-    self->current++;
+    Literal literal = parse_literal(self);
+    self->current++; // consume literal
 
     if (self->tokens[self->current].type != TT_RIGHT_PAREN) {
-        sprintf(error_msg, "expected `)` at line %i",
-                self->tokens[self->current].line);
+        sprintf(error_msg, "expected `)` at line %i, found %s",
+                self->tokens[self->current].line,
+                ttostr(self->tokens[self->current].type));
         error(error_msg);
-        return (Stmt){0};
+        return (Stmt){.type = STMT_ERR};
     }
     self->current++; // consume `)`
 
+    if (self->tokens[self->current].type != TT_SEMICOLON) {
+        sprintf(error_msg, "expected `;` at line %i, found %s",
+                self->tokens[self->current].line,
+                ttostr(self->tokens[self->current].type));
+        error(error_msg);
+        return (Stmt){.type = STMT_ERR};
+    }
+    self->current++; // consume `;`
+
     return (Stmt){
-        .type = EXIT_STMT,
+        .type = STMT_EXIT,
         .data.Exit.code = literal,
     };
 }
@@ -50,11 +78,9 @@ static Stmt parse_stmt(Parser *self) {
     case TT_EXIT:
         return parse_exit(self);
     default:
-        /* error("not yet implemented"); */
-        return (Stmt){0};
+        error("not yet implemented");
+        return (Stmt){.type = STMT_ERR};
     }
-
-    return (Stmt){0};
 }
 
 static Stmt *parser_parse(Parser *self) {
@@ -66,7 +92,7 @@ static Stmt *parser_parse(Parser *self) {
     }
 
     int i = 0;
-    do {
+    while (i < MAX_STMTS && self->tokens[self->current].type != TT_EOF) {
         if (i >= capacity) {
             capacity *= GROW_FACTOR;
             Stmt *temp = realloc(stmts, sizeof(Stmt) * capacity);
@@ -78,8 +104,18 @@ static Stmt *parser_parse(Parser *self) {
             stmts = temp;
         }
         stmts[i] = parse_stmt(self);
+        if (stmts[i].type == STMT_ERR) {
+            free(stmts);
+            return NULL;
+        }
         i++;
-    } while (i < MAX_STMTS && self->tokens[self->current].type != TT_EOF);
+    }
+
+    printf("%i statements\n", i);
+
+    for (int j = 0; j < i; j++) {
+        printf("%s\n", stmttostr(stmts[j]));
+    }
 
     Stmt *temp = realloc(stmts, sizeof(Stmt) * (i + 1));
     if (!temp) {
@@ -99,4 +135,17 @@ Parser parser_new(Token *tokens) {
 
         .parse = parser_parse,
     };
+}
+
+char *stmttostr(Stmt s) {
+    switch (s.type) {
+    case STMT_EXPR:
+        return "EXPR";
+    case STMT_BLOCK:
+        return "BLOCK";
+    case STMT_EXIT:
+        return "EXIT";
+    default:
+        return "UNKNOWN";
+    }
 }
