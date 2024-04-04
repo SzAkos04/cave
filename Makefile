@@ -9,7 +9,7 @@ BUILD_DIR := build
 OBJ := $(SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 .PHONY: all build run clean
 
-all: run
+all: build
 
 build: $(BUILD_DIR)/$(PROJECT)
 
@@ -22,9 +22,6 @@ $(BUILD_DIR)/$(PROJECT): $(OBJ)
 
 release:
 	$(MAKE) BUILD_ARGS="-O3" -B
-
-run: build
-	./$(BUILD_DIR)/$(PROJECT) $(ARGS)
 
 clean:
 	rm -rf $(BUILD_DIR)
