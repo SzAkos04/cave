@@ -8,6 +8,9 @@
 #include <stdio.h>
 #include <string.h>
 
+static int generate_STMT_IR(Stmt stmt, LLVMModuleRef module,
+                            LLVMBuilderRef builder);
+
 static int generate_FN_IR(Stmt stmt, LLVMModuleRef module,
                           LLVMBuilderRef builder) {
     LLVMValueRef func = LLVMGetNamedFunction(module, stmt.data.Fn.name);
@@ -35,6 +38,9 @@ static int generate_FN_IR(Stmt stmt, LLVMModuleRef module,
         int ret_val = 0;
 
         // function body
+        for (int i = 0; i < stmt.data.Fn.stmt_n; i++) {
+            generate_STMT_IR(stmt.data.Fn.stmts[i], module, builder);
+        }
 
         LLVMBuildRet(builder, LLVMConstInt(LLVMInt32Type(), ret_val, 0));
     }

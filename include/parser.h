@@ -58,6 +58,7 @@ typedef struct Stmt {
             char *name;
             Token *arguments;
             struct Stmt *stmts;
+            int stmt_n;
         } Fn;
     } data;
 } Stmt;
