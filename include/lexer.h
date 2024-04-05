@@ -4,7 +4,6 @@
 
 typedef struct Lexer {
     const char *buf;
-    int start;
     int current;
     int line;
 

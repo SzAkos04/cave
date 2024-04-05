@@ -74,13 +74,10 @@ static Stmt parse_fn(Parser *self) {
     }
     self->current++; // consume `(`
 
-    int start = self->current;
-    Token arguments[MAX_ARGS];
-    for (; self->tokens[self->current].type != TT_RIGHT_PAREN;
-         self->current++) {
-        arguments[self->current - start] = self->tokens[self->current];
+    // TODO: Parse function arguments
+    while (self->tokens[self->current].type != TT_RIGHT_PAREN) {
+        self->current++;
     }
-    /* int argument_num = self->current - start; */
 
     if (self->tokens[self->current].type != TT_RIGHT_PAREN) {
         sprintf(error_msg, "expected `)` at line %i, found %s",
@@ -100,7 +97,6 @@ static Stmt parse_fn(Parser *self) {
     }
     self->current++; // consume `{`
 
-    start = self->current;
     Stmt stmts[MAX_STMTS]; // TODO: change this
     int n;
     for (n = 0; self->tokens[self->current].type != TT_RIGHT_BRACE; n++) {
@@ -119,7 +115,8 @@ static Stmt parse_fn(Parser *self) {
     return (Stmt){.type = STMT_FN,
                   .data.Fn = {
                       .name = name,
-                      .arguments = arguments,
+                      .args = NULL,
+                      .arg_n = 0,
                       .stmts = stmts,
                       .stmt_n = n,
                   }};

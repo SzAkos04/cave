@@ -61,19 +61,19 @@ static Token next(Lexer *self) {
         };
     default: {
         if (isdigit(cur)) {
-            self->start = self->current;
+            int start = self->current;
             while (isdigit(self->buf[self->current]) ||
                    (self->buf[self->current] == '.' &&
                     isdigit(self->buf[self->current + 1]))) {
                 self->current++;
             }
-            int len = self->current - self->start;
+            int len = self->current - start;
             char *lexeme = (char *)malloc(sizeof(char) * (len + 1));
             if (!lexeme) {
                 error("failed to allocate memory");
                 break;
             }
-            strncpy(lexeme, self->buf + self->start, len);
+            strncpy(lexeme, self->buf + start, len);
             lexeme[len] = '\0';
 
             Token token = (Token){
@@ -86,18 +86,18 @@ static Token next(Lexer *self) {
 
             return token;
         } else if (isalpha(cur)) {
-            self->start = self->current;
+            int start = self->current;
             while (isalpha(self->buf[self->current])) {
                 self->current++;
             }
-            int len = self->current - self->start;
+            int len = self->current - start;
 
             char *lexeme = malloc(sizeof(char) * (len + 1));
             if (!lexeme) {
                 error("failed to allocate memory");
                 break;
             }
-            strncpy(lexeme, self->buf + self->start, len);
+            strncpy(lexeme, self->buf + start, len);
             lexeme[len] = '\0';
 
             TokenType tt;
@@ -175,7 +175,6 @@ static Token *lex(Lexer *self) {
 Lexer lexer_new(const char *buf) {
     return (Lexer){
         .buf = buf,
-        .start = 0,
         .current = 0,
         .line = 1,
 

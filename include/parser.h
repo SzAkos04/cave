@@ -56,7 +56,11 @@ typedef struct Stmt {
         struct Stmt *Block;
         struct {
             char *name;
-            Token *arguments;
+            struct {
+                Token type;
+                Token name;
+            } *args;
+            int arg_n;
             struct Stmt *stmts;
             int stmt_n;
         } Fn;

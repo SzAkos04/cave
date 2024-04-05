@@ -39,6 +39,7 @@ static int generate_FN_IR(Stmt stmt, LLVMModuleRef module,
 
         // function body
         for (int i = 0; i < stmt.data.Fn.stmt_n; i++) {
+            // recursive
             generate_STMT_IR(stmt.data.Fn.stmts[i], module, builder);
         }
 
