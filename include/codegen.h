@@ -1,6 +1,7 @@
 #pragma once
 
 #include "parser.h"
+
 #include <llvm-c/Types.h>
 
 typedef struct LLVMBackend {
@@ -11,7 +12,7 @@ typedef struct LLVMBackend {
     LLVMModuleRef module;
     LLVMBuilderRef builder;
 
-    void (*generate_IR)(struct LLVMBackend *);
+    int (*generate_IR)(struct LLVMBackend *);
 } LLVMBackend;
 
 LLVMBackend backend_new(Stmt *);

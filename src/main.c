@@ -4,6 +4,7 @@
 #include "lexer.h"
 #include "parser.h"
 
+#include <llvm-c/BitWriter.h>
 #include <llvm-c/Core.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -109,28 +110,26 @@ int main(int argc, char **argv) {
     start_time = clock();
 
     LLVMBackend backend = backend_new(stmts);
-    backend.generate_IR(&backend);
-
-    char *ir = LLVMPrintModuleToString(backend.module);
+    if (backend.generate_IR(&backend) != 0) {
+        free(stmts);
+        free_backend(backend);
+        return 1;
+    }
 
     free(stmts);
-
-    free_backend(backend);
 
     time_elapsed = ((double)(clock() - start_time)) / CLOCKS_PER_SEC * 1000;
     char IR_gen_msg[64];
     sprintf(IR_gen_msg, "IR generation done in %.3lfms", time_elapsed);
     success(IR_gen_msg);
 
-    FILE *out = fopen("cave.ll", "w");
-    if (!out) {
-        error("failed to open file");
+    if (LLVMWriteBitcodeToFile(backend.module, "cave.ll") != 0) {
+        error("failed to write IR to file");
         return 1;
     }
-    fputs(ir, out);
-    fclose(out);
 
-    /* system("llc -filetype=obj cave.ll -o cave.o"); */
+    free_backend(backend);
+
     if (system("llc -filetype=obj cave.ll -o cave.o") != 0) {
         error("llc failed");
         return 1;
@@ -141,6 +140,8 @@ int main(int argc, char **argv) {
         return 1;
     }
     remove("cave.o");
+
+    success("compilation done");
 
     return 0;
 }
