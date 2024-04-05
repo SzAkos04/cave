@@ -23,7 +23,7 @@ static int generate_FN_IR(LLVMBackend *self) {
         LLVMPositionBuilderAtEnd(self->builder, entry_block);
         LLVMBuildRet(self->builder, LLVMConstInt(LLVMInt32Type(), 0, 0));
     } else {
-        error("not yet implemented");
+        error("other functions not yet implemented");
         return 1;
     }
 
@@ -39,7 +39,7 @@ static int generate_IR(LLVMBackend *self) {
             }
             break;
         default:
-            error("not yet implemented");
+            error("other statements are not yet implemented");
             return 1;
         }
         self->current++;

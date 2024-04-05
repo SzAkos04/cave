@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
         error("no input files");
         return 1;
     } else if (argc > 2) {
-        error("not yet implemented");
+        error("more arguments are not yet implemented");
         return 1;
     }
 

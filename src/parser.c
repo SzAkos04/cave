@@ -129,7 +129,7 @@ static Stmt parse_stmt(Parser *self) {
     case TT_EOF:
         return (Stmt){.type = STMT_EOF};
     default:
-        error("not yet implemented");
+        error("other tokens are not yet implemented");
         return (Stmt){.type = STMT_ERR};
     }
 }
