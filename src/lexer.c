@@ -87,7 +87,7 @@ static Token next(Lexer *self) {
             return token;
         } else if (isalpha(cur)) {
             int start = self->current;
-            while (isalpha(self->buf[self->current])) {
+            while (isalnum(self->buf[self->current])) {
                 self->current++;
             }
             int len = self->current - start;
