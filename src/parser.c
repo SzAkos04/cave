@@ -102,9 +102,8 @@ static Stmt parse_fn(Parser *self) {
 
     start = self->current;
     Stmt stmts[MAX_STMTS]; // TODO: change this
-    for (; self->tokens[self->current].type != TT_RIGHT_BRACE;
-         self->current++) {
-        parse_stmt(self);
+    for (int i = 0; self->tokens[self->current].type != TT_RIGHT_BRACE; i++) {
+        stmts[i] = parse_stmt(self);
     }
 
     if (self->tokens[self->current].type != TT_RIGHT_BRACE) {
