@@ -101,6 +101,9 @@ static Stmt parse_fn(Parser *self) {
     int n;
     for (n = 0; self->tokens[self->current].type != TT_RIGHT_BRACE; n++) {
         stmts[n] = parse_stmt(self);
+        if (stmts[n].type == STMT_ERR) {
+            return (Stmt){.type = STMT_ERR};
+        }
     }
 
     if (self->tokens[self->current].type != TT_RIGHT_BRACE) {
