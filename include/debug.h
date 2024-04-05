@@ -2,6 +2,20 @@
 
 #include <stdio.h>
 
+/* #define DEBUG 1 */
+
+#ifdef __clang__
+// Check if optimization flags are enabled
+#if defined(__OPTIMIZE__) || defined(__OPTIMIZE_SIZE__)
+#define DEBUG 0
+#else
+#define DEBUG 1
+#endif
+#else
+// Not using clang
+#define DEBUG 0
+#endif
+
 #define RESET "\033[;0m"
 #define BOLD "\033[0;1m"
 #define RED "\033[0;31m"

@@ -1,5 +1,6 @@
 #include "debug.h"
 #include "parser.h"
+#include "stmt.h"
 #include "token.h"
 
 #include <stdio.h>
@@ -10,21 +11,6 @@
 
 #define INITIAL_STMTS 4
 #define GROW_FACTOR 2
-
-char *stmttostr(Stmt s) {
-    switch (s.type) {
-    case STMT_EXPR:
-        return "EXPR";
-    case STMT_BLOCK:
-        return "BLOCK";
-    case STMT_FN:
-        return "FN";
-    case STMT_EOF:
-        return "EOF";
-    default:
-        return "UNKNOWN";
-    }
-}
 
 static Stmt parse_stmt(Parser *self);
 
@@ -167,9 +153,11 @@ static Stmt *parser_parse(Parser *self) {
     } while (i < MAX_STMTS && stmts[i - 1].type != STMT_EOF);
 
     // print out the statement types
-    /* for (int j = 0; j < i; j++) { */
-    /*     printf("%s\n", stmttostr(stmts[j])); */
-    /* } */
+#if DEBUG
+    for (int j = 0; j < i; j++) {
+        print_stmt(stmts[j]);
+    }
+#endif
 
     Stmt *temp = realloc(stmts, sizeof(Stmt) * (i + 1));
     if (!temp) {

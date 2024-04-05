@@ -3,6 +3,7 @@
 #include "codegen.h"
 #include "lexer.h"
 #include "parser.h"
+#include "stmt.h"
 
 #include <llvm-c/BitWriter.h>
 #include <llvm-c/Core.h>
@@ -39,8 +40,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    clock_t start_time;
-    start_time = clock();
+    clock_t start_time = clock();
 
     FILE *fs = fopen(path, "r");
     if (!fs) {
@@ -82,13 +82,14 @@ int main(int argc, char **argv) {
     }
     free(buf);
 
-    double time_elapsed =
-        ((double)(clock() - start_time)) / CLOCKS_PER_SEC * 1000;
+#if DEBUG
     char lexing_msg[64];
-    sprintf(lexing_msg, "lexing done in %.3lfms", time_elapsed);
+    sprintf(lexing_msg, "lexing done in %.3lfms",
+            ((double)(clock() - start_time)) / CLOCKS_PER_SEC * 1000);
     success(lexing_msg);
 
-    start_time = clock();
+    clock_t parse_start_time = clock();
+#endif
 
     Parser parser = parser_new(tokens);
 
@@ -102,12 +103,14 @@ int main(int argc, char **argv) {
 
     free_tokens(tokens);
 
-    time_elapsed = ((double)(clock() - start_time)) / CLOCKS_PER_SEC * 1000;
+#if DEBUG
     char parsing_msg[64];
-    sprintf(parsing_msg, "parsing done in %.3lfms", time_elapsed);
+    sprintf(parsing_msg, "parsing done in %.3lfms",
+            ((double)(clock() - parse_start_time)) / CLOCKS_PER_SEC * 1000);
     success(parsing_msg);
 
-    start_time = clock();
+    clock_t codegen_start_time = clock();
+#endif
 
     LLVMBackend backend = backend_new(stmts);
     if (backend.generate_IR(&backend) != 0) {
@@ -118,10 +121,12 @@ int main(int argc, char **argv) {
 
     free(stmts);
 
-    time_elapsed = ((double)(clock() - start_time)) / CLOCKS_PER_SEC * 1000;
+#if DEBUG
     char IR_gen_msg[64];
-    sprintf(IR_gen_msg, "IR generation done in %.3lfms", time_elapsed);
+    sprintf(IR_gen_msg, "IR generation done in %.3lfms",
+            ((double)(clock() - codegen_start_time)) / CLOCKS_PER_SEC * 1000);
     success(IR_gen_msg);
+#endif
 
     if (LLVMWriteBitcodeToFile(backend.module, "cave.ll") != 0) {
         error("failed to write IR to file");
@@ -144,7 +149,10 @@ int main(int argc, char **argv) {
     }
     remove("cave.o");
 
-    success("compilation done");
+    char success[64];
+    sprintf(success, "compilation done in %.3lfms",
+            ((double)(clock() - start_time)) / CLOCKS_PER_SEC * 1000);
+    success(success);
 
     return 0;
 }

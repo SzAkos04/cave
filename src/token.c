@@ -1,7 +1,6 @@
 #include "token.h"
 
-#include <stddef.h>
-#include <stdlib.h>
+#include <stdio.h>
 
 char *ttostr(TokenType t) {
     switch (t) {
@@ -26,4 +25,8 @@ char *ttostr(TokenType t) {
     default:
         return NULL;
     }
+}
+
+void print_token(Token token) {
+    printf("%s: \"%s\"\n", ttostr(token.type), token.lexeme);
 }
