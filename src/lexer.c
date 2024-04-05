@@ -6,43 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *ttostr(TokenType t) {
-    switch (t) {
-    case TT_LEFT_PAREN:
-        return "LEFT_PAREN";
-    case TT_RIGHT_PAREN:
-        return "RIGHT_PAREN";
-    case TT_LEFT_BRACE:
-        return "LEFT_BRACE";
-    case TT_RIGHT_BRACE:
-        return "RIGHT_BRACE";
-    case TT_SEMICOLON:
-        return "SEMICOLON";
-    case TT_IDENTIFIER:
-        return "IDENTIFIER";
-    case TT_NUMBER:
-        return "NUMBER";
-    case TT_FN:
-        return "FN";
-    case TT_EOF:
-        return "EOF";
-    case TT_UNKNOWN:
-        return "UNKNOWN";
-    default:
-        return NULL;
-    }
-}
-
 static Token next(Lexer *self) {
     char cur = self->buf[self->current];
 
-    if (isspace(cur)) {
+    while (isspace(cur)) {
         if (cur == '\n') {
-            self->current++;
             self->line++;
-        } else {
-            self->current++;
         }
+        self->current++;
         cur = self->buf[self->current];
     }
 
@@ -183,8 +154,7 @@ static Token *lex(Lexer *self) {
         }
         tokens[i] = next(self);
         i++;
-        // for some reason it is -2, otherwise it will print LEFT_PAREN
-    } while (i < MAX_TOKENS && tokens[i - 1].type != TT_EOF);
+    } while (i < MAX_TOKENS && tokens[i].type != TT_EOF);
 
     Token *temp = realloc(tokens, sizeof(Token) * (i + 1));
     if (!temp) {
@@ -195,9 +165,9 @@ static Token *lex(Lexer *self) {
     tokens = temp;
 
     // print out the tokens
-    /* for (int i = 0; tokens[i - 1].type != TT_EOF; i++) { */
-    /*     printf("%s: \"%s\"\n", ttostr(tokens[i].type), tokens[i].lexeme); */
-    /* } */
+    for (int i = 0; tokens[i - 1].type != TT_EOF; i++) {
+        printf("%s: \"%s\"\n", ttostr(tokens[i].type), tokens[i].lexeme);
+    }
 
     return tokens;
 }

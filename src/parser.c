@@ -143,8 +143,6 @@ static Stmt *parser_parse(Parser *self) {
     }
 
     int i = 0;
-    /* while (i < MAX_STMTS && self->tokens[self->current - 2].type != TT_EOF) {
-     */
     do {
         if (i >= capacity) {
             capacity *= GROW_FACTOR;
@@ -162,7 +160,7 @@ static Stmt *parser_parse(Parser *self) {
             return NULL;
         }
         i++;
-    } while (i < MAX_STMTS && stmts[i - 1].type != STMT_EOF);
+    } while (i < MAX_STMTS && stmts[i].type != STMT_EOF);
 
     // print out the statement types
     /* for (int j = 0; j < i; j++) { */
