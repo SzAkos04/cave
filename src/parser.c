@@ -1,6 +1,6 @@
 #include "debug.h"
-#include "lexer.h"
 #include "parser.h"
+#include "token.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -160,7 +160,7 @@ static Stmt *parser_parse(Parser *self) {
             return NULL;
         }
         i++;
-    } while (i < MAX_STMTS && stmts[i].type != STMT_EOF);
+    } while (i < MAX_STMTS && stmts[i - 1].type != STMT_EOF);
 
     // print out the statement types
     /* for (int j = 0; j < i; j++) { */

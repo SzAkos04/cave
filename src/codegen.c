@@ -14,17 +14,30 @@ static int generate_FN_IR(LLVMBackend *self) {
     LLVMValueRef func = LLVMGetNamedFunction(self->module, stmt.data.Fn.name);
 
     if (!func) {
-        LLVMTypeRef func_type = LLVMFunctionType(LLVMInt32Type(), NULL, 0, 0);
+        LLVMTypeRef ret_type;
+        if (strcmp(stmt.data.Fn.name, "main") == 0) {
+            ret_type = LLVMInt32Type();
+        } else {
+            ret_type = LLVMVoidType();
+        }
+
+        LLVMTypeRef *arg_type = NULL;
+        unsigned int arg_num = 0;
+
+        LLVMTypeRef func_type =
+            LLVMFunctionType(ret_type, arg_type, arg_num, 0);
+
         func = LLVMAddFunction(self->module, stmt.data.Fn.name, func_type);
     }
 
     if (strcmp(stmt.data.Fn.name, "main") == 0) {
         LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(func, "entry");
         LLVMPositionBuilderAtEnd(self->builder, entry_block);
-        LLVMBuildRet(self->builder, LLVMConstInt(LLVMInt32Type(), 0, 0));
-    } else {
-        error("other functions not yet implemented");
-        return 1;
+        int ret_val = 0;
+
+        // function body
+
+        LLVMBuildRet(self->builder, LLVMConstInt(LLVMInt32Type(), ret_val, 0));
     }
 
     return 0;

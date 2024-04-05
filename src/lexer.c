@@ -165,9 +165,9 @@ static Token *lex(Lexer *self) {
     tokens = temp;
 
     // print out the tokens
-    for (int i = 0; tokens[i - 1].type != TT_EOF; i++) {
-        printf("%s: \"%s\"\n", ttostr(tokens[i].type), tokens[i].lexeme);
-    }
+    /* for (int i = 0; tokens[i - 1].type != TT_EOF; i++) { */
+    /*     printf("%s: \"%s\"\n", ttostr(tokens[i].type), tokens[i].lexeme); */
+    /* } */
 
     return tokens;
 }
