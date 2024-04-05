@@ -21,7 +21,7 @@ void print_stmt(Stmt stmt) {
         }
         break;
     case STMT_EOF:
-        printf("EOF: (null)\n");
+        printf("EOF\n");
         break;
     default:
         printf("ERROR\n");
