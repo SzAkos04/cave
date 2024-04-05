@@ -1,5 +1,6 @@
 #include "debug.h"
 #include "lexer.h"
+#include "token.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -71,7 +72,7 @@ static Token next(Lexer *self) {
             char *lexeme = (char *)malloc(sizeof(char) * (len + 1));
             if (!lexeme) {
                 error("failed to allocate memory");
-                break;
+                return (Token){.type = TT_UNKNOWN};
             }
             strncpy(lexeme, self->buf + start, len);
             lexeme[len] = '\0';
@@ -95,7 +96,7 @@ static Token next(Lexer *self) {
             char *lexeme = malloc(sizeof(char) * (len + 1));
             if (!lexeme) {
                 error("failed to allocate memory");
-                break;
+                return (Token){.type = TT_UNKNOWN};
             }
             strncpy(lexeme, self->buf + start, len);
             lexeme[len] = '\0';

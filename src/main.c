@@ -125,6 +125,7 @@ int main(int argc, char **argv) {
 
     if (LLVMWriteBitcodeToFile(backend.module, "cave.ll") != 0) {
         error("failed to write IR to file");
+        free_backend(backend);
         return 1;
     }
 
@@ -132,11 +133,13 @@ int main(int argc, char **argv) {
 
     if (system("llc -filetype=obj cave.ll -o cave.o") != 0) {
         error("llc failed");
+        remove("cave.ll");
         return 1;
     }
     remove("cave.ll");
     if (system("clang cave.o -o a.out") != 0) {
         error("clang failed");
+        remove("cave.o");
         return 1;
     }
     remove("cave.o");
