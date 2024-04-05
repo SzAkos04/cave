@@ -4,7 +4,7 @@ CFLAGS := -Wall -Wextra -Werror -Wpedantic
 # LLVM stuff
 CFLAGS += `llvm-config --cflags`
 LDFLAGS := `llvm-config --ldflags`
-LIBS := -L`llvm-config --libdir` `llvm-config --libs`
+LIBS := `llvm-config --libs`
 
 INCLUDES := -Iinclude
 SRC_DIR := src

@@ -21,12 +21,12 @@ make release
 This command will generate an executable inside the cave/build directory.
 To use the program globally, it is recommended to add the build folder to path.
 
-<!-- ## Setup -->
-<!-- Ensure that the LLVM libraries are properly linked by adding the following line -->
-<!-- to your shell profile (e.g., .bashrc, .zshrc): -->
-<!-- ```bash -->
-<!-- export LD_LIBRARY_PATH=$(llvm-config --libdir):$LD_LIBRARY_PATH -->
-<!-- ``` -->
+## Setup
+Ensure that the LLVM libraries are properly linked by adding the following line
+to your shell profile (e.g., .bashrc, .zshrc):
+```bash
+export LD_LIBRARY_PATH=$(llvm-config --libdir):$LD_LIBRARY_PATH
+```
 
 ## Usage
 To use the compiler, simply run
