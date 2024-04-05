@@ -8,10 +8,9 @@
 #include <stdio.h>
 #include <string.h>
 
-static int generate_FN_IR(LLVMBackend *self) {
-    Stmt stmt = self->stmts[self->current];
-
-    LLVMValueRef func = LLVMGetNamedFunction(self->module, stmt.data.Fn.name);
+static int generate_FN_IR(Stmt stmt, LLVMModuleRef module,
+                          LLVMBuilderRef builder) {
+    LLVMValueRef func = LLVMGetNamedFunction(module, stmt.data.Fn.name);
 
     if (!func) {
         LLVMTypeRef ret_type;
@@ -27,17 +26,33 @@ static int generate_FN_IR(LLVMBackend *self) {
         LLVMTypeRef func_type =
             LLVMFunctionType(ret_type, arg_type, arg_num, 0);
 
-        func = LLVMAddFunction(self->module, stmt.data.Fn.name, func_type);
+        func = LLVMAddFunction(module, stmt.data.Fn.name, func_type);
     }
 
     if (strcmp(stmt.data.Fn.name, "main") == 0) {
         LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(func, "entry");
-        LLVMPositionBuilderAtEnd(self->builder, entry_block);
+        LLVMPositionBuilderAtEnd(builder, entry_block);
         int ret_val = 0;
 
         // function body
 
-        LLVMBuildRet(self->builder, LLVMConstInt(LLVMInt32Type(), ret_val, 0));
+        LLVMBuildRet(builder, LLVMConstInt(LLVMInt32Type(), ret_val, 0));
+    }
+
+    return 0;
+}
+
+static int generate_STMT_IR(Stmt stmt, LLVMModuleRef module,
+                            LLVMBuilderRef builder) {
+    switch (stmt.type) {
+    case STMT_FN:
+        if (generate_FN_IR(stmt, module, builder) != 0) {
+            return 1;
+        }
+        break;
+    default:
+        error("other statements are not yet implemented");
+        return 1;
     }
 
     return 0;
@@ -45,16 +60,8 @@ static int generate_FN_IR(LLVMBackend *self) {
 
 static int generate_IR(LLVMBackend *self) {
     while (self->stmts[self->current].type != STMT_EOF) {
-        switch (self->stmts[self->current].type) {
-        case STMT_FN:
-            if (generate_FN_IR(self) != 0) {
-                return 1;
-            }
-            break;
-        default:
-            error("other statements are not yet implemented");
-            return 1;
-        }
+        generate_STMT_IR(self->stmts[self->current], self->module,
+                         self->builder);
         self->current++;
     }
 

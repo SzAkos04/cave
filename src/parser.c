@@ -115,9 +115,12 @@ static Stmt parse_fn(Parser *self) {
     }
     self->current++; // consume `}`
 
-    return (Stmt){
-        .type = STMT_FN,
-        .data.Fn = {.name = name, .arguments = arguments, .stmts = stmts}};
+    return (Stmt){.type = STMT_FN,
+                  .data.Fn = {
+                      .name = name,
+                      .arguments = arguments,
+                      .stmts = stmts,
+                  }};
 }
 
 static Stmt parse_stmt(Parser *self) {
