@@ -76,30 +76,14 @@ static int generate_RETURN_IR(Stmt stmt, LLVMContextRef context,
         return 1;
     }
 
-    // Get the current function being built
+    // get the current function being built
     LLVMValueRef current_func = LLVMGetLastFunction(module);
     if (!current_func || !LLVMIsAFunction(current_func)) {
         error("return statement found outside of a function");
         return 1;
     }
 
-    // FIXME: This causes SIGSEGV
-    /* LLVMTypeRef func_type = LLVMGetElementType(LLVMTypeOf(current_func)); */
-    /* if (LLVMGetTypeKind(func_type) != LLVMFunctionTypeKind) { */
-    /*     error("expected function type"); */
-    /*     return 1; */
-    /* } */
-
-    /* LLVMTypeRef ret_type = LLVMGetReturnType(func_type); */
-
-    // check if the return value matches the function's return type
-    /* if (ret_value) { */
-    /*     LLVMTypeRef ret_value_type = LLVMTypeOf(ret_value); */
-    /*     if (ret_type != ret_value_type) { */
-    /*         error("return type does not match function return type"); */
-    /*         return 1; */
-    /*     } */
-    /* } */
+    // the return type is checked later, after codegen
 
     LLVMBuildRet(builder, ret_value);
 

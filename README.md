@@ -35,3 +35,15 @@ cave [file.cv]
 ```
 This will create an executable
 named `a.out`. Customization of the output executable name is not currently supported.
+
+## Cave code example
+Here's a sample snippet demonstrating the basic syntax of the `Cave` language:
+```
+fn main() i32 {
+    return 1;
+}
+```
+This example defines the `main` function and returns the integer 1.
+
+The `main` function is always the entry point to the program, it must always
+conclude with an integer return statement.
