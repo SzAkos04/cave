@@ -8,6 +8,7 @@ typedef struct Stmt {
         STMT_EXPR,
         STMT_BLOCK,
         STMT_FN,
+        STMT_RETURN,
         STMT_EOF,
         STMT_ERR = 255,
     } type;
@@ -28,6 +29,9 @@ typedef struct Stmt {
             struct Stmt *stmts;
             int stmt_n;
         } Fn;
+        struct {
+            Expr value;
+        } Return;
     } data;
 } Stmt;
 

@@ -1,5 +1,7 @@
 #include "codegen.h"
 #include "debug.h"
+#include "expr.h"
+#include "literal.h"
 #include "stmt.h"
 #include "token.h"
 
@@ -9,6 +11,28 @@
 #include <stdio.h>
 #include <string.h>
 
+static LLVMValueRef generate_literal_IR(Literal literal,
+                                        LLVMContextRef context) {
+    switch (literal.type) {
+    case LITERAL_STRING:
+        return LLVMConstStringInContext(context, literal.data.Str,
+                                        strlen(literal.data.Str), 1);
+    case LITERAL_INTEGER:
+        return LLVMConstInt(LLVMInt32Type(), literal.data.Integer, 1);
+    case LITERAL_FLOAT:
+        return LLVMConstReal(LLVMFloatType(), literal.data.Float);
+    case LITERAL_BOOLEAN:
+        return LLVMConstInt(LLVMInt1Type(), literal.data.Boolean ? 1 : 0, 0);
+    case LITERAL_IDENTIFIER:
+        error("not yet implemented");
+        return NULL;
+    case LITERAL_NULL: {
+        LLVMTypeRef null_type = LLVMPointerType(LLVMInt32Type(), 0);
+        return LLVMConstNull(null_type);
+    }
+    }
+}
+
 static LLVMTypeRef generate_type_IR(Token token) {
     switch (token.type) {
     case TT_VOID:
@@ -16,17 +40,75 @@ static LLVMTypeRef generate_type_IR(Token token) {
     case TT_I32:
         return LLVMInt32Type();
     default:
-        break;
+        error("unexpected type");
+        return NULL;
     }
-    return LLVMVoidType();
 }
 
-static int generate_STMT_IR(Stmt stmt, LLVMModuleRef module,
-                            LLVMBuilderRef builder);
+LLVMValueRef generate_expression_IR(Expr expr, LLVMContextRef context) {
+    switch (expr.type) {
+    case EXPR_UNARY:
+        error("unary expressions not yet implemented");
+        return NULL;
+    case EXPR_BINARY:
+        error("binary expressions not yet implemented");
+        return NULL;
+    case EXPR_LITERAL:
+        return generate_literal_IR(expr.data.Literal, context);
+    case EXPR_VARIABLE:
+        error("variable expressions not yet implemented");
+        return NULL;
+    case EXPR_ASSIGNMENT:
+        error("assignment expressions not yet implemented");
+        return NULL;
+    }
+}
+
+static int generate_STMT_IR(Stmt stmt, LLVMContextRef context,
+                            LLVMModuleRef module, LLVMBuilderRef builder);
+
+static int generate_RETURN_IR(Stmt stmt, LLVMContextRef context,
+                              LLVMModuleRef module, LLVMBuilderRef builder) {
+
+    LLVMValueRef ret_value =
+        generate_expression_IR(stmt.data.Return.value, context);
+    if (!ret_value) {
+        return 1;
+    }
+
+    // Get the current function being built
+    LLVMValueRef current_func = LLVMGetLastFunction(module);
+    if (!current_func || !LLVMIsAFunction(current_func)) {
+        error("return statement found outside of a function");
+        return 1;
+    }
+
+    // FIXME: This causes SIGSEGV
+    /* LLVMTypeRef func_type = LLVMGetElementType(LLVMTypeOf(current_func)); */
+    /* if (LLVMGetTypeKind(func_type) != LLVMFunctionTypeKind) { */
+    /*     error("expected function type"); */
+    /*     return 1; */
+    /* } */
+
+    /* LLVMTypeRef ret_type = LLVMGetReturnType(func_type); */
+
+    // check if the return value matches the function's return type
+    /* if (ret_value) { */
+    /*     LLVMTypeRef ret_value_type = LLVMTypeOf(ret_value); */
+    /*     if (ret_type != ret_value_type) { */
+    /*         error("return type does not match function return type"); */
+    /*         return 1; */
+    /*     } */
+    /* } */
+
+    LLVMBuildRet(builder, ret_value);
+
+    return 0;
+}
 
 // returns 0 if successful, 1 otherwise
-static int generate_FN_IR(Stmt stmt, LLVMModuleRef module,
-                          LLVMBuilderRef builder) {
+static int generate_FN_IR(Stmt stmt, LLVMContextRef context,
+                          LLVMModuleRef module, LLVMBuilderRef builder) {
 
     if (LLVMGetNamedFunction(module, stmt.data.Fn.name)) {
         char error_msg[64];
@@ -36,13 +118,24 @@ static int generate_FN_IR(Stmt stmt, LLVMModuleRef module,
     }
 
     LLVMTypeRef ret_type = generate_type_IR(stmt.data.Fn.ret_type);
+    if (!ret_type) {
+        return 1;
+    }
 
     LLVMTypeRef *arg_type = NULL;
     unsigned int arg_num = 0;
 
     LLVMTypeRef func_type = LLVMFunctionType(ret_type, arg_type, arg_num, 0);
+    if (!func_type) {
+        error("`LLVMFunctionType` failed");
+        return 1;
+    }
 
     LLVMValueRef func = LLVMAddFunction(module, stmt.data.Fn.name, func_type);
+    if (!func) {
+        error("`LLVMAddFunction` failed");
+        return 1;
+    }
 
     if (strcmp(stmt.data.Fn.name, "main") == 0) {
         if (ret_type != LLVMInt32Type()) {
@@ -50,29 +143,33 @@ static int generate_FN_IR(Stmt stmt, LLVMModuleRef module,
             return 1;
         }
         LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(func, "entry");
+        if (!entry_block) {
+            error("`LLVMAppendBasicBlock` failed");
+            return 1;
+        }
         LLVMPositionBuilderAtEnd(builder, entry_block);
-        int ret_val = 0;
 
         // function body
         for (int i = 0; i < stmt.data.Fn.stmt_n; i++) {
             // recursive
-            if (generate_STMT_IR(stmt.data.Fn.stmts[i], module, builder) != 0) {
+            if (generate_STMT_IR(stmt.data.Fn.stmts[i], context, module,
+                                 builder) != 0) {
                 return 1;
             }
         }
-
-        LLVMBuildRet(builder, LLVMConstInt(LLVMInt32Type(), ret_val, 0));
     }
 
     return 0;
 }
 
 // returns 0 if successful, 1 otherwise
-static int generate_STMT_IR(Stmt stmt, LLVMModuleRef module,
-                            LLVMBuilderRef builder) {
+static int generate_STMT_IR(Stmt stmt, LLVMContextRef context,
+                            LLVMModuleRef module, LLVMBuilderRef builder) {
     switch (stmt.type) {
     case STMT_FN:
-        return generate_FN_IR(stmt, module, builder);
+        return generate_FN_IR(stmt, context, module, builder);
+    case STMT_RETURN:
+        return generate_RETURN_IR(stmt, context, module, builder);
     default:
         error("other statements are not yet implemented");
         return 1;
@@ -84,8 +181,8 @@ static int generate_STMT_IR(Stmt stmt, LLVMModuleRef module,
 // returns 0 if successful, 1 otherwise
 static int generate_IR(LLVMBackend *self) {
     while (self->stmts[self->current].type != STMT_EOF) {
-        if (generate_STMT_IR(self->stmts[self->current], self->module,
-                             self->builder) != 0) {
+        if (generate_STMT_IR(self->stmts[self->current], self->context,
+                             self->module, self->builder) != 0) {
             return 1;
         }
         self->current++;

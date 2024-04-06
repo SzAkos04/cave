@@ -24,6 +24,8 @@ char *ttostr(Token t) {
         return "NUMBER";
     case TT_FN:
         return "FN";
+    case TT_RETURN:
+        return "RETURN";
     case TT_VOID:
         return "VOID";
     case TT_I32:

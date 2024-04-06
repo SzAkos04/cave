@@ -104,6 +104,8 @@ static Token next(Lexer *self) {
             TokenType tt;
             if (strcmp(lexeme, "fn") == 0) {
                 tt = TT_FN;
+            } else if (strcmp(lexeme, "return") == 0) {
+                tt = TT_RETURN;
             } else if (strcmp(lexeme, "void") == 0) {
                 tt = TT_VOID;
             } else if (strcmp(lexeme, "i32") == 0) {

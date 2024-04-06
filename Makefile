@@ -3,7 +3,7 @@ PROJECT := cave
 CFLAGS := -Wall -Wextra -Werror -Wpedantic
 # LLVM stuff
 CFLAGS += `llvm-config --cflags`
-LDFLAGS := `llvm-config --ldflags`
+LDFLAGS := `llvm-config --ldflags` -lm
 LIBS := `llvm-config --libs`
 
 INCLUDES := -Iinclude
@@ -25,7 +25,7 @@ $(BUILD_DIR)/$(PROJECT): $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS) $(LIBS) $(BUILD_ARGS)
 
 release:
-	$(MAKE) BUILD_ARGS="-O3 -march=native -mtune=native -fomit-frame-pointer -ffast-math -finline-functions" -B
+	$(MAKE) BUILD_ARGS="-O3 -march=native -mtune=native -fomit-frame-pointer -finline-functions" -B
 
 clean:
 	rm -rf $(BUILD_DIR)

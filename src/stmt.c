@@ -25,6 +25,9 @@ void print_stmt(Stmt stmt) {
             print_stmt(stmt.data.Fn.stmts[i]);
         }
         break;
+    case STMT_RETURN:
+        printf("RETURN\n");
+        break;
     case STMT_EOF:
         printf("EOF\n");
         break;

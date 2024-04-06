@@ -20,6 +20,7 @@ typedef enum {
 
     // keywords
     TT_FN,
+    TT_RETURN,
 
     // types
     TT_VOID,

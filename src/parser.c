@@ -1,8 +1,11 @@
 #include "debug.h"
+#include "expr.h"
+#include "literal.h"
 #include "parser.h"
 #include "stmt.h"
 #include "token.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,21 +17,31 @@
 
 static Stmt parse_stmt(Parser *self);
 
-/* static Literal parse_literal(Parser *self) { */
-/*     Token token = self->tokens[self->current]; */
-/*     Literal literal; */
+static Literal parse_literal(Parser *self) {
+    Token token = self->tokens[self->current];
 
-/*     switch (token.type) { */
-/*     case TT_NUMBER: */
-/*         literal.Integer = strtol(token.lexeme, NULL, 10); */
-/*         break; */
-/*     default: */
-/*         error("parsing literals not yet implemented"); */
-/*         literal.null = NULL; */
-/*     } */
+    switch (token.type) {
+    case TT_NUMBER:
+        if (floor(strtod(token.lexeme, NULL)) == strtod(token.lexeme, NULL)) {
+            return (Literal){.type = LITERAL_INTEGER,
+                             .data.Integer = strtol(token.lexeme, NULL, 10)};
+        } else {
+            return (Literal){.type = LITERAL_FLOAT,
+                             .data.Float = strtod(token.lexeme, NULL)};
+        }
+    default:
+        error("parsing literals not yet implemented");
+        return (Literal){
+            .type = LITERAL_NULL,
+            .data.null = NULL,
+        };
+    }
+}
 
-/*     return literal; */
-/* } */
+static Expr parse_expr(Parser *self) {
+    // TODO: temporary
+    return (Expr){.type = EXPR_LITERAL, .data.Literal = parse_literal(self)};
+}
 
 static Stmt parse_fn(Parser *self) {
     char error_msg[64];
@@ -126,11 +139,39 @@ static Stmt parse_fn(Parser *self) {
                   }};
 }
 
+static Stmt parse_return(Parser *self) {
+    char error_msg[64];
+    if (self->tokens[self->current].type != TT_RETURN) {
+        sprintf(error_msg, "expected `return` keyword at line %i, found %s",
+                self->tokens[self->current].line,
+                ttostr(self->tokens[self->current]));
+        error(error_msg);
+        return (Stmt){.type = STMT_ERR};
+    }
+    self->current++; // consume `return`
+
+    Expr expr = parse_expr(self);
+    self->current++; // consume last expr part
+
+    if (self->tokens[self->current].type != TT_SEMICOLON) {
+        sprintf(error_msg, "expected `;` at line %i, found %s",
+                self->tokens[self->current].line,
+                ttostr(self->tokens[self->current]));
+        error(error_msg);
+        return (Stmt){.type = STMT_ERR};
+    }
+    self->current++; // consume `;`
+
+    return (Stmt){.type = STMT_RETURN, .data.Return = {.value = expr}};
+}
+
 static Stmt parse_stmt(Parser *self) {
     Token token = self->tokens[self->current];
     switch (token.type) {
     case TT_FN:
         return parse_fn(self);
+    case TT_RETURN:
+        return parse_return(self);
     case TT_EOF:
         return (Stmt){.type = STMT_EOF};
     default:
