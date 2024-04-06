@@ -1,5 +1,6 @@
 #include "expr.h"
 #include "stmt.h"
+#include "token.h"
 
 #include <stdio.h>
 
@@ -16,6 +17,10 @@ void print_stmt(Stmt stmt) {
         break;
     case STMT_FN:
         printf("FN %s:\n", stmt.data.Fn.name);
+        for (int i = 0; i < stmt.data.Fn.arg_n; i++) {
+            printf("ARG %i: %s %s\n", i, ttostr(stmt.data.Fn.args[i].type),
+                   ttostr(stmt.data.Fn.args[i].name));
+        }
         for (int i = 0; i < stmt.data.Fn.stmt_n; i++) {
             print_stmt(stmt.data.Fn.stmts[i]);
         }

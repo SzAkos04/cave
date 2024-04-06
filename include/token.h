@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 #define MAX_TOKENS 2048
 
 #define MAX_TOKEN_LEN 1024
@@ -19,16 +21,22 @@ typedef enum {
     // keywords
     TT_FN,
 
+    // types
+    TT_VOID,
+    TT_I32,
+
     TT_EOF,
     TT_UNKNOWN,
 } TokenType;
-
-char *ttostr(TokenType);
 
 typedef struct {
     TokenType type;
     char *lexeme;
     int line;
 } Token;
+
+bool is_type(Token);
+
+char *ttostr(Token);
 
 void print_token(Token);

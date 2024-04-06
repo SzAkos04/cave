@@ -35,7 +35,7 @@ static Stmt parse_fn(Parser *self) {
     if (self->tokens[self->current].type != TT_FN) {
         sprintf(error_msg, "expected `fn` keyword at line %i, found %s",
                 self->tokens[self->current].line,
-                ttostr(self->tokens[self->current].type));
+                ttostr(self->tokens[self->current]));
         error(error_msg);
         return (Stmt){.type = STMT_ERR};
     }
@@ -44,7 +44,7 @@ static Stmt parse_fn(Parser *self) {
     if (self->tokens[self->current].type != TT_IDENTIFIER) {
         sprintf(error_msg, "expected identifier at line %i, found %s",
                 self->tokens[self->current].line,
-                ttostr(self->tokens[self->current].type));
+                ttostr(self->tokens[self->current]));
         error(error_msg);
         return (Stmt){.type = STMT_ERR};
     }
@@ -54,7 +54,7 @@ static Stmt parse_fn(Parser *self) {
     if (self->tokens[self->current].type != TT_LEFT_PAREN) {
         sprintf(error_msg, "expected `(` at line %i, found %s",
                 self->tokens[self->current].line,
-                ttostr(self->tokens[self->current].type));
+                ttostr(self->tokens[self->current]));
         error(error_msg);
         return (Stmt){.type = STMT_ERR};
     }
@@ -68,16 +68,30 @@ static Stmt parse_fn(Parser *self) {
     if (self->tokens[self->current].type != TT_RIGHT_PAREN) {
         sprintf(error_msg, "expected `)` at line %i, found %s",
                 self->tokens[self->current].line,
-                ttostr(self->tokens[self->current].type));
+                ttostr(self->tokens[self->current]));
         error(error_msg);
         return (Stmt){.type = STMT_ERR};
     }
     self->current++; // consume `)`
 
-    if (self->tokens[self->current].type != TT_LEFT_BRACE) {
+    Token ret_type = (Token){.type = TT_VOID,
+                             .lexeme = NULL,
+                             .line = self->tokens[self->current].line};
+    if (is_type(self->tokens[self->current])) {
+        ret_type = self->tokens[self->current];
+        self->current++; // consume type
+
+        if (self->tokens[self->current].type != TT_LEFT_BRACE) {
+            sprintf(error_msg, "expected `{` at line %i, found %s",
+                    self->tokens[self->current].line,
+                    ttostr(self->tokens[self->current]));
+            error(error_msg);
+            return (Stmt){.type = STMT_ERR};
+        }
+    } else if (self->tokens[self->current].type != TT_LEFT_BRACE) {
         sprintf(error_msg, "expected `{` at line %i, found %s",
                 self->tokens[self->current].line,
-                ttostr(self->tokens[self->current].type));
+                ttostr(self->tokens[self->current]));
         error(error_msg);
         return (Stmt){.type = STMT_ERR};
     }
@@ -95,7 +109,7 @@ static Stmt parse_fn(Parser *self) {
     if (self->tokens[self->current].type != TT_RIGHT_BRACE) {
         sprintf(error_msg, "expected `}` at line %i, found %s",
                 self->tokens[self->current].line,
-                ttostr(self->tokens[self->current].type));
+                ttostr(self->tokens[self->current]));
         error(error_msg);
         return (Stmt){.type = STMT_ERR};
     }
@@ -106,6 +120,7 @@ static Stmt parse_fn(Parser *self) {
                       .name = name,
                       .args = NULL,
                       .arg_n = 0,
+                      .ret_type = ret_type,
                       .stmts = stmts,
                       .stmt_n = n,
                   }};

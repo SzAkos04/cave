@@ -1,12 +1,25 @@
 #include "codegen.h"
 #include "debug.h"
-#include "parser.h"
+#include "stmt.h"
+#include "token.h"
 
 #include <llvm-c/Analysis.h>
 #include <llvm-c/Core.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+
+static LLVMTypeRef generate_type_IR(Token token) {
+    switch (token.type) {
+    case TT_VOID:
+        return LLVMVoidType();
+    case TT_I32:
+        return LLVMInt32Type();
+    default:
+        break;
+    }
+    return LLVMVoidType();
+}
 
 static int generate_STMT_IR(Stmt stmt, LLVMModuleRef module,
                             LLVMBuilderRef builder);
@@ -22,12 +35,7 @@ static int generate_FN_IR(Stmt stmt, LLVMModuleRef module,
         return 1;
     }
 
-    LLVMTypeRef ret_type;
-    if (strcmp(stmt.data.Fn.name, "main") == 0) {
-        ret_type = LLVMInt32Type();
-    } else {
-        ret_type = LLVMVoidType();
-    }
+    LLVMTypeRef ret_type = generate_type_IR(stmt.data.Fn.ret_type);
 
     LLVMTypeRef *arg_type = NULL;
     unsigned int arg_num = 0;
@@ -37,6 +45,10 @@ static int generate_FN_IR(Stmt stmt, LLVMModuleRef module,
     LLVMValueRef func = LLVMAddFunction(module, stmt.data.Fn.name, func_type);
 
     if (strcmp(stmt.data.Fn.name, "main") == 0) {
+        if (ret_type != LLVMInt32Type()) {
+            error("main function should return an `i32`");
+            return 1;
+        }
         LLVMBasicBlockRef entry_block = LLVMAppendBasicBlock(func, "entry");
         LLVMPositionBuilderAtEnd(builder, entry_block);
         int ret_val = 0;
@@ -79,7 +91,9 @@ static int generate_IR(LLVMBackend *self) {
         self->current++;
     }
 
-    /* LLVMDumpModule(self->module); */
+#if DEBUG
+    LLVMDumpModule(self->module);
+#endif
 
     char *error = NULL;
     if (LLVMVerifyModule(self->module, LLVMReturnStatusAction, &error)) {

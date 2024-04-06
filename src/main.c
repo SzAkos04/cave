@@ -75,7 +75,6 @@ int main(int argc, char **argv) {
 
     Token *tokens = lexer.lex(&lexer);
     // if it fails, it returns NULL, and the error message is printed
-    // thus no need to print it again here
     if (!tokens) {
         free(buf);
         return 1;
@@ -95,7 +94,6 @@ int main(int argc, char **argv) {
 
     Stmt *stmts = parser.parse(&parser);
     // if it fails, it returns NULL, and the error message is printed
-    // thus no need to print it again here
     if (!stmts) {
         free_tokens(tokens);
         return 1;
@@ -112,6 +110,7 @@ int main(int argc, char **argv) {
     clock_t codegen_start_time = clock();
 #endif
 
+    // if it fails, it returns 1, and the error message is printed
     LLVMBackend backend = backend_new(stmts);
     if (backend.generate_IR(&backend) != 0) {
         free(stmts);
@@ -128,7 +127,8 @@ int main(int argc, char **argv) {
     success(IR_gen_msg);
 #endif
 
-    if (LLVMWriteBitcodeToFile(backend.module, "cave.ll") != 0) {
+    // write IR to temp
+    if (LLVMWriteBitcodeToFile(backend.module, "temp.ll") != 0) {
         error("failed to write IR to file");
         free_backend(backend);
         return 1;
@@ -136,18 +136,19 @@ int main(int argc, char **argv) {
 
     free_backend(backend);
 
-    if (system("llc -filetype=obj cave.ll -o cave.o") != 0) {
+    // compile IR code
+    if (system("llc -filetype=obj temp.ll -o temp.o") != 0) {
         error("llc failed");
         remove("cave.ll");
         return 1;
     }
-    remove("cave.ll");
-    if (system("clang cave.o -o a.out") != 0) {
+    remove("temp.ll");
+    if (system("clang temp.o -o a.out") != 0) {
         error("clang failed");
         remove("cave.o");
         return 1;
     }
-    remove("cave.o");
+    remove("temp.o");
 
     char success[64];
     sprintf(success, "compilation done in %.3lfms",

@@ -25,7 +25,7 @@ $(BUILD_DIR)/$(PROJECT): $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS) $(LIBS) $(BUILD_ARGS)
 
 release:
-	$(MAKE) BUILD_ARGS="-O3" -B
+	$(MAKE) BUILD_ARGS="-O3 -march=native -mtune=native -fomit-frame-pointer -ffast-math -finline-functions" -B
 
 clean:
 	rm -rf $(BUILD_DIR)

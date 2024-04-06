@@ -24,6 +24,7 @@ typedef struct Stmt {
                 Token name;
             } *args;
             int arg_n;
+            Token ret_type;
             struct Stmt *stmts;
             int stmt_n;
         } Fn;

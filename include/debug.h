@@ -26,8 +26,8 @@
 // Print error message to
 #define error(msg)                                                             \
     do {                                                                       \
-        fprintf(stderr, "%scave: %serror%s: %s\n", BOLD, BOLD_RED, RESET,      \
-                msg);                                                          \
+        fprintf(stderr, "%scave: %serror%s: %s\ncompilation terminated\n",     \
+                BOLD, BOLD_RED, RESET, msg);                                   \
     } while (0)
 
 #define success(msg)                                                           \
