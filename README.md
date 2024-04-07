@@ -40,10 +40,18 @@ named `a.out`. Customization of the output executable name is not currently supp
 Here's a sample snippet demonstrating the basic syntax of the `Cave` language:
 ```
 fn main() i32 {
-    return 1;
+    const a: i32 = 0;
+
+    return a;
 }
 ```
-This example defines the `main` function and returns the integer 1.
 
-The `main` function is always the entry point to the program, it must always
-conclude with an integer return statement.
+### Explanation
+In this example: 
+
+- `fn main() i32`: Defines the `main` function, which serves as the entry point to
+the program. It is expeced to return a 32 bit integer (`i32`).
+
+- `const a: i32 = 0;`: Declares a constant named `a` of type `i32` with the value of `0`.
+
+- `return a;`: Returns the value of `a` from the `main` function.
