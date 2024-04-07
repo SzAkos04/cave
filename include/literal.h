@@ -22,5 +22,3 @@ typedef struct {
         void *null;
     } data;
 } Literal;
-
-char *literal_to_str(Literal);

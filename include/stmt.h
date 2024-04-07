@@ -1,12 +1,14 @@
 #pragma once
 
 #include "expr.h"
+#include "literal.h"
 #include "token.h"
 
 typedef struct Stmt {
     enum {
         STMT_EXPR,
         STMT_BLOCK,
+        STMT_CONST,
         STMT_FN,
         STMT_RETURN,
         STMT_EOF,
@@ -30,9 +32,14 @@ typedef struct Stmt {
             int stmt_n;
         } Fn;
         struct {
+            Literal name;
+            enum {
+                CONST_I32,
+            } type;
+            Expr value;
+        } Const;
+        struct {
             Expr value;
         } Return;
     } data;
 } Stmt;
-
-void print_stmt(Stmt);

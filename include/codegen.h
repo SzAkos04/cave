@@ -12,6 +12,7 @@ typedef struct LLVMBackend {
     LLVMModuleRef module;
     LLVMBuilderRef builder;
 
+    // generate LLVM IR from array of statements
     int (*generate_IR)(struct LLVMBackend *);
 } LLVMBackend;
 

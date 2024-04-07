@@ -45,7 +45,8 @@ static LLVMTypeRef generate_type_IR(Token token) {
     }
 }
 
-LLVMValueRef generate_expression_IR(Expr expr, LLVMContextRef context) {
+LLVMValueRef generate_expression_IR(Expr expr, LLVMContextRef context,
+                                    LLVMModuleRef module) {
     switch (expr.type) {
     case EXPR_UNARY:
         error("unary expressions not yet implemented");
@@ -56,8 +57,8 @@ LLVMValueRef generate_expression_IR(Expr expr, LLVMContextRef context) {
     case EXPR_LITERAL:
         return generate_literal_IR(expr.data.Literal, context);
     case EXPR_VARIABLE:
-        error("variable expressions not yet implemented");
-        return NULL;
+        return LLVMGetInitializer(
+            LLVMGetNamedGlobal(module, expr.data.Variable));
     case EXPR_ASSIGNMENT:
         error("assignment expressions not yet implemented");
         return NULL;
@@ -67,26 +68,27 @@ LLVMValueRef generate_expression_IR(Expr expr, LLVMContextRef context) {
 static int generate_STMT_IR(Stmt stmt, LLVMContextRef context,
                             LLVMModuleRef module, LLVMBuilderRef builder);
 
-static int generate_RETURN_IR(Stmt stmt, LLVMContextRef context,
-                              LLVMModuleRef module, LLVMBuilderRef builder) {
+static int generate_CONST_IR(Stmt stmt, LLVMContextRef context,
+                             LLVMModuleRef module, LLVMBuilderRef builder) {
+    LLVMValueRef value = NULL;
+    switch (stmt.data.Const.type) {
+    case CONST_I32: {
+        value = generate_expression_IR(stmt.data.Const.value, context, module);
+        LLVMValueRef global_var = LLVMAddGlobal(module, LLVMTypeOf(value),
+                                                stmt.data.Const.name.data.Str);
+        LLVMSetInitializer(global_var, value);
+        LLVMSetLinkage(global_var, LLVMInternalLinkage);
 
-    LLVMValueRef ret_value =
-        generate_expression_IR(stmt.data.Return.value, context);
-    if (!ret_value) {
-        return 1;
+        LLVMSetGlobalConstant(global_var, 1);
+        LLVMSetAlignment(global_var, 4);
+
+        break;
     }
-
-    // get the current function being built
-    LLVMValueRef current_func = LLVMGetLastFunction(module);
-    if (!current_func || !LLVMIsAFunction(current_func)) {
-        error("return statement found outside of a function");
-        return 1;
     }
-
-    // the return type is checked later, after codegen
-
-    LLVMBuildRet(builder, ret_value);
-
+    (void)stmt;
+    (void)context;
+    (void)module;
+    (void)builder;
     return 0;
 }
 
@@ -146,10 +148,35 @@ static int generate_FN_IR(Stmt stmt, LLVMContextRef context,
     return 0;
 }
 
+static int generate_RETURN_IR(Stmt stmt, LLVMContextRef context,
+                              LLVMModuleRef module, LLVMBuilderRef builder) {
+
+    LLVMValueRef ret_value =
+        generate_expression_IR(stmt.data.Return.value, context, module);
+    if (!ret_value) {
+        return 1;
+    }
+
+    // get the current function being built
+    LLVMValueRef current_func = LLVMGetLastFunction(module);
+    if (!current_func || !LLVMIsAFunction(current_func)) {
+        error("return statement found outside of a function");
+        return 1;
+    }
+
+    // the return type is checked later, after codegen
+
+    LLVMBuildRet(builder, ret_value);
+
+    return 0;
+}
+
 // returns 0 if successful, 1 otherwise
 static int generate_STMT_IR(Stmt stmt, LLVMContextRef context,
                             LLVMModuleRef module, LLVMBuilderRef builder) {
     switch (stmt.type) {
+    case STMT_CONST:
+        return generate_CONST_IR(stmt, context, module, builder);
     case STMT_FN:
         return generate_FN_IR(stmt, context, module, builder);
     case STMT_RETURN:
@@ -178,7 +205,9 @@ static int generate_IR(LLVMBackend *self) {
 
     char *error = NULL;
     if (LLVMVerifyModule(self->module, LLVMReturnStatusAction, &error)) {
-        error(error);
+        char error_msg[128];
+        sprintf(error_msg, "LLVM error: \n%s", error);
+        error(error_msg);
         LLVMDisposeMessage(error);
         return 1;
     };

@@ -54,6 +54,20 @@ static Token next(Lexer *self) {
             .lexeme = ";",
             .line = self->line,
         };
+    case ':':
+        self->current++;
+        return (Token){
+            .type = TT_COLON,
+            .lexeme = ":",
+            .line = self->line,
+        };
+    case '=':
+        self->current++;
+        return (Token){
+            .type = TT_EQUAL,
+            .lexeme = "=",
+            .line = self->line,
+        };
     case '\0':
         return (Token){
             .type = TT_EOF,
@@ -79,11 +93,9 @@ static Token next(Lexer *self) {
 
             Token token = (Token){
                 .type = TT_NUMBER,
-                .lexeme = strdup(lexeme),
+                .lexeme = lexeme,
                 .line = self->line,
             };
-
-            free(lexeme);
 
             return token;
         } else if (isalpha(cur)) {
@@ -93,7 +105,7 @@ static Token next(Lexer *self) {
             }
             int len = self->current - start;
 
-            char *lexeme = malloc(sizeof(char) * (len + 1));
+            char *lexeme = (char *)malloc(sizeof(char) * (len + 1));
             if (!lexeme) {
                 error("failed to allocate memory");
                 return (Token){.type = TT_UNKNOWN};
@@ -101,8 +113,10 @@ static Token next(Lexer *self) {
             strncpy(lexeme, self->buf + start, len);
             lexeme[len] = '\0';
 
-            TokenType tt;
-            if (strcmp(lexeme, "fn") == 0) {
+            TokenType tt = TT_IDENTIFIER;
+            if (strcmp(lexeme, "const") == 0) {
+                tt = TT_CONST;
+            } else if (strcmp(lexeme, "fn") == 0) {
                 tt = TT_FN;
             } else if (strcmp(lexeme, "return") == 0) {
                 tt = TT_RETURN;
@@ -110,17 +124,13 @@ static Token next(Lexer *self) {
                 tt = TT_VOID;
             } else if (strcmp(lexeme, "i32") == 0) {
                 tt = TT_I32;
-            } else {
-                tt = TT_IDENTIFIER;
             }
 
             Token token = (Token){
                 .type = tt,
-                .lexeme = strdup(lexeme),
+                .lexeme = lexeme,
                 .line = self->line,
             };
-
-            free(lexeme);
 
             return token;
         }
@@ -173,6 +183,7 @@ static Token *lex(Lexer *self) {
 
 #if DEBUG
     // print out the tokens
+    // -1 so it prints out the EOF token too
     for (int i = 0; tokens[i - 1].type != TT_EOF; i++) {
         print_token(tokens[i]);
     }
@@ -193,7 +204,11 @@ Lexer lexer_new(const char *buf) {
 
 void free_tokens(Token *tokens) {
     for (int i = 0; tokens[i].type == TT_EOF; i++) {
-        free(tokens[i].lexeme);
+        if (tokens[i].type == TT_NUMBER || tokens[i].type == TT_FN ||
+            tokens[i].type == TT_RETURN || tokens[i].type == TT_VOID ||
+            tokens[i].type == TT_I32 || tokens[i].type == TT_IDENTIFIER) {
+            free(tokens[i].lexeme);
+        }
     }
     free(tokens);
 }

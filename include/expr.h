@@ -30,5 +30,3 @@ typedef struct Expr {
         } Assignment;
     } data;
 } Expr;
-
-char *expr_to_str(Expr);

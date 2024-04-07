@@ -18,10 +18,14 @@ char *ttostr(Token t) {
         return "RIGHT_BRACE";
     case TT_SEMICOLON:
         return "SEMICOLON";
+    case TT_EQUAL:
+        return "EQUAL";
     case TT_IDENTIFIER:
         return "IDENTIFIER";
     case TT_NUMBER:
         return "NUMBER";
+    case TT_CONST:
+        return "CONST";
     case TT_FN:
         return "FN";
     case TT_RETURN:

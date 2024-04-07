@@ -13,12 +13,17 @@ typedef enum {
     TT_LEFT_BRACE,
     TT_RIGHT_BRACE,
     TT_SEMICOLON,
+    TT_COLON,
+
+    // one or two character tokens
+    TT_EQUAL,
 
     // literals
     TT_IDENTIFIER,
     TT_NUMBER,
 
     // keywords
+    TT_CONST,
     TT_FN,
     TT_RETURN,
 

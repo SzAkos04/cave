@@ -2,17 +2,15 @@
 
 #include <stdio.h>
 
-/* #define DEBUG 1 */
-
 #ifdef __clang__
-// Check if optimization flags are enabled
+// check if optimization flags are enabled
 #if defined(__OPTIMIZE__) || defined(__OPTIMIZE_SIZE__)
 #define DEBUG 0
 #else
 #define DEBUG 1
 #endif
 #else
-// Not using clang
+// not using clang
 #define DEBUG 0
 #endif
 
@@ -23,7 +21,6 @@
 #define GREEN "\033[0;32m"
 #define BOLD_GREEN "\033[1;32m"
 
-// Print error message to
 #define error(msg)                                                             \
     do {                                                                       \
         fprintf(stderr, "%scave: %serror%s: %s\ncompilation terminated\n",     \
