@@ -11,6 +11,7 @@ typedef struct Stmt {
         STMT_CONST,
         STMT_FN,
         STMT_RETURN,
+        STMT_COMMENT,
         STMT_EOF,
         STMT_ERR = 255,
     } type;

@@ -277,6 +277,9 @@ static Stmt parse_stmt(Parser *self) {
         return parse_fn(self);
     case TT_RETURN:
         return parse_return(self);
+    case TT_COMMENT:
+        self->current++;
+        return (Stmt){.type = STMT_COMMENT};
     case TT_EOF:
         return (Stmt){.type = STMT_EOF};
     default:

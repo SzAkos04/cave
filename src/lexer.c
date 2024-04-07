@@ -8,17 +8,16 @@
 #include <string.h>
 
 static Token next(Lexer *self) {
-    char cur = self->buf[self->current];
+    char error_msg[64];
 
-    while (isspace(cur)) {
-        if (cur == '\n') {
+    while (isspace(self->buf[self->current])) {
+        if (self->buf[self->current] == '\n') {
             self->line++;
         }
         self->current++;
-        cur = self->buf[self->current];
     }
 
-    switch (cur) {
+    switch (self->buf[self->current]) {
     case '(':
         self->current++;
         return (Token){
@@ -61,13 +60,192 @@ static Token next(Lexer *self) {
             .lexeme = ":",
             .line = self->line,
         };
+    case '!':
+        self->current++;
+        if (self->buf[self->current] == '=') {
+            self->current++;
+            return (Token){
+                .type = TT_BANG_EQUAL,
+                .lexeme = "!=",
+                .line = self->line,
+            };
+        } else {
+            return (Token){
+                .type = TT_BANG,
+                .lexeme = "!",
+                .line = self->line,
+            };
+        }
     case '=':
         self->current++;
-        return (Token){
-            .type = TT_EQUAL,
-            .lexeme = "=",
-            .line = self->line,
-        };
+        if (self->buf[self->current] == '=') {
+            self->current++;
+            return (Token){
+                .type = TT_EQUAL_EQUAL,
+                .lexeme = "==",
+                .line = self->line,
+            };
+        } else {
+            return (Token){
+                .type = TT_EQUAL,
+                .lexeme = "=",
+                .line = self->line,
+            };
+        }
+    case '>':
+        self->current++;
+        if (self->buf[self->current] == '=') {
+            self->current++;
+            return (Token){
+                .type = TT_GREATER_EQUAL,
+                .lexeme = ">=",
+                .line = self->line,
+            };
+        } else {
+            return (Token){
+                .type = TT_GREATER,
+                .lexeme = ">",
+                .line = self->line,
+            };
+        }
+    case '<':
+        self->current++;
+        if (self->buf[self->current] == '=') {
+            self->current++;
+            return (Token){
+                .type = TT_LESS_EQUAL,
+                .lexeme = "<=",
+                .line = self->line,
+            };
+        } else {
+            return (Token){
+                .type = TT_LESS,
+                .lexeme = "<",
+                .line = self->line,
+            };
+        }
+    case '+':
+        self->current++;
+        if (self->buf[self->current] == '=') {
+            self->current++;
+            return (Token){
+                .type = TT_PLUS_EQUAL,
+                .lexeme = "+=",
+                .line = self->line,
+            };
+        } else {
+            return (Token){
+                .type = TT_PLUS,
+                .lexeme = "+",
+                .line = self->line,
+            };
+        }
+    case '-':
+        self->current++;
+        if (self->buf[self->current] == '=') {
+            self->current++;
+            return (Token){
+                .type = TT_MINUS_EQUAL,
+                .lexeme = "-=",
+                .line = self->line,
+            };
+        } else {
+            return (Token){
+                .type = TT_MINUS,
+                .lexeme = "-",
+                .line = self->line,
+            };
+        }
+    case '/':
+        self->current++;
+        if (self->buf[self->current] == '=') {
+            self->current++;
+            return (Token){
+                .type = TT_SLASH_EQUAL,
+                .lexeme = "/=",
+                .line = self->line,
+            };
+        } else if (self->buf[self->current] == '/') {
+            while (self->buf[self->current] != '\n') {
+                self->current++;
+            }
+            return (Token){.type = TT_COMMENT};
+        } else if (self->buf[self->current] == '*') {
+            while (self->buf[self->current - 1] == '*' &&
+                   self->buf[self->current] == '/') {
+                self->current++;
+                if (self->buf[self->current] == '\n') {
+                    self->line++;
+                }
+            }
+            return (Token){.type = TT_COMMENT};
+        } else {
+            return (Token){
+                .type = TT_SLASH,
+                .lexeme = "/",
+                .line = self->line,
+            };
+        }
+    case '*':
+        self->current++;
+        if (self->buf[self->current] == '=') {
+            self->current++;
+            return (Token){
+                .type = TT_STAR_EQUAL,
+                .lexeme = "*=",
+                .line = self->line,
+            };
+        } else {
+            return (Token){
+                .type = TT_STAR,
+                .lexeme = "*",
+                .line = self->line,
+            };
+        }
+    case '%':
+        self->current++;
+        if (self->buf[self->current] == '=') {
+            self->current++;
+            return (Token){
+                .type = TT_MODULO_EQUAL,
+                .lexeme = "%=",
+                .line = self->line,
+            };
+        } else {
+            return (Token){
+                .type = TT_MODULO,
+                .lexeme = "%",
+                .line = self->line,
+            };
+        }
+    case '&':
+        self->current++;
+        if (self->buf[self->current] == '&') {
+            self->current++;
+            return (Token){
+                .type = TT_AND,
+                .lexeme = "&&",
+                .line = self->line,
+            };
+        } else {
+            sprintf(error_msg, "unexpected token `&` at line %i", self->line);
+            error(error_msg);
+            return (Token){.type = TT_UNKNOWN};
+        }
+    case '|':
+        self->current++;
+        if (self->buf[self->current] == '|') {
+            self->current++;
+            return (Token){
+                .type = TT_OR,
+                .lexeme = "||",
+                .line = self->line,
+            };
+        } else {
+            sprintf(error_msg, "unexpected token `|` at line %i", self->line);
+            error(error_msg);
+            return (Token){.type = TT_UNKNOWN};
+        }
     case '\0':
         return (Token){
             .type = TT_EOF,
@@ -75,7 +253,7 @@ static Token next(Lexer *self) {
             .line = self->line,
         };
     default: {
-        if (isdigit(cur)) {
+        if (isdigit(self->buf[self->current])) {
             int start = self->current;
             while (isdigit(self->buf[self->current]) ||
                    (self->buf[self->current] == '.' &&
@@ -98,7 +276,7 @@ static Token next(Lexer *self) {
             };
 
             return token;
-        } else if (isalpha(cur)) {
+        } else if (isalpha(self->buf[self->current])) {
             int start = self->current;
             while (isalnum(self->buf[self->current])) {
                 self->current++;
@@ -138,7 +316,6 @@ static Token next(Lexer *self) {
     }
     }
 
-    self->current++;
     return (Token){
         .type = TT_UNKNOWN,
         .lexeme = NULL,
@@ -170,6 +347,13 @@ static Token *lex(Lexer *self) {
             tokens = temp;
         }
         tokens[i] = next(self);
+        if (tokens[i].type == TT_UNKNOWN) {
+            char error_msg[64];
+            sprintf(error_msg, "unknown token `%s` at line %i",
+                    tokens[i].lexeme, tokens[i].line);
+            error(error_msg);
+            return NULL;
+        }
         i++;
     } while (i < MAX_TOKENS && tokens[i].type != TT_EOF);
 

@@ -56,17 +56,22 @@ LLVMValueRef generate_expression_IR(Expr expr, LLVMContextRef context,
         return NULL;
     case EXPR_LITERAL:
         return generate_literal_IR(expr.data.Literal, context);
-    case EXPR_VARIABLE:
-        return LLVMGetInitializer(
-            LLVMGetNamedGlobal(module, expr.data.Variable));
+    case EXPR_VARIABLE: {
+        char error_msg[64];
+        LLVMValueRef global = LLVMGetNamedGlobal(module, expr.data.Variable);
+        if (!global) {
+            sprintf(error_msg, "use of undeclared variable `%s`",
+                    expr.data.Variable);
+            error(error_msg);
+            return NULL;
+        }
+        return LLVMGetInitializer(global);
+    }
     case EXPR_ASSIGNMENT:
         error("assignment expressions not yet implemented");
         return NULL;
     }
 }
-
-static int generate_STMT_IR(Stmt stmt, LLVMContextRef context,
-                            LLVMModuleRef module, LLVMBuilderRef builder);
 
 static int generate_CONST_IR(Stmt stmt, LLVMContextRef context,
                              LLVMModuleRef module, LLVMBuilderRef builder) {
@@ -91,6 +96,9 @@ static int generate_CONST_IR(Stmt stmt, LLVMContextRef context,
     (void)builder;
     return 0;
 }
+
+static int generate_STMT_IR(Stmt stmt, LLVMContextRef context,
+                            LLVMModuleRef module, LLVMBuilderRef builder);
 
 // returns 0 if successful, 1 otherwise
 static int generate_FN_IR(Stmt stmt, LLVMContextRef context,
@@ -181,7 +189,10 @@ static int generate_STMT_IR(Stmt stmt, LLVMContextRef context,
         return generate_FN_IR(stmt, context, module, builder);
     case STMT_RETURN:
         return generate_RETURN_IR(stmt, context, module, builder);
+    case STMT_COMMENT:
+        return 0;
     default:
+        printf("%i\n", stmt.type);
         error("other statements are not yet implemented");
         return 1;
     }
