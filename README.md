@@ -39,19 +39,23 @@ named `a.out`. Customization of the output executable name is not currently supp
 ## Cave code example
 Here's a sample snippet demonstrating the basic syntax of the `Cave` language:
 ```
-fn main() i32 {
-    const a: i32 = 0;
+const a: i32 = 0;
+const b: i32 = a;
 
-    return a;
+fn main() i32 {
+
+    return b;
 }
 ```
 
 ### Explanation
 In this example: 
 
+- `const a: i32 = 0;`: Declares a constant named `a` of type `i32` with the value of `0`.
+
+- `const b: i32 = a;`: Declares a constant named `b` of type `i32` with the value of the value of the constant `a`, `0`
+
 - `fn main() i32`: Defines the `main` function, which serves as the entry point to
 the program. It is expeced to return a 32 bit integer (`i32`).
 
-- `const a: i32 = 0;`: Declares a constant named `a` of type `i32` with the value of `0`.
-
-- `return a;`: Returns the value of `a` from the `main` function.
+- `return b;`: Returns the value of `b` from the `main` function.
