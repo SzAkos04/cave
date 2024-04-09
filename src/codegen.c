@@ -79,6 +79,14 @@ static int generate_CONST_IR(Stmt stmt, LLVMContextRef context,
     switch (stmt.data.Const.type) {
     case CONST_I32: {
         value = generate_expression_IR(stmt.data.Const.value, context, module);
+        if (!value) {
+            return 1;
+        }
+		LLVMTypeRef value_type = LLVMTypeOf(value);
+		if (!value_type) {
+			error("failed to get type of value");
+			return 1;
+		}
         LLVMValueRef global_var = LLVMAddGlobal(module, LLVMTypeOf(value),
                                                 stmt.data.Const.name.data.Str);
         LLVMSetInitializer(global_var, value);
