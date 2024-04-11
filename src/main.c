@@ -23,20 +23,20 @@ int main(int argc, char **argv) {
     }
 
     char *path = argv[1];
+
+    if (access(path, F_OK | R_OK) != 0) {
+        error("file does not exist");
+        return 1;
+    }
+    
     char *ext = strchr(path, '.');
     if (!ext) {
         error("file has no extension");
         return 1;
     }
-    ext++; // skip the '.' character
 
-    if (strcmp(ext, "cv") != 0) {
+    if (strcmp(ext, ".cv") != 0) {
         error("file extention not recognised");
-        return 1;
-    }
-
-    if (access(path, F_OK | R_OK) != 0) {
-        error("file does not exist");
         return 1;
     }
 
