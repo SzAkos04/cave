@@ -56,6 +56,6 @@ In this example:
 - `const b: i32 = a;`: Declares a constant named `b` of type `i32` with the value of the value of the constant `a`, `0`
 
 - `fn main() i32`: Defines the `main` function, which serves as the entry point to
-the program. It is expeced to return a 32 bit integer (`i32`).
+the program. It is expeced to return a 32-bit integer (`i32`).
 
 - `return b;`: Returns the value of `b` from the `main` function.
