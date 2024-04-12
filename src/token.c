@@ -6,6 +6,8 @@
 
 bool is_type(Token t) { return t.type == TT_I32 || t.type == TT_VOID; }
 
+bool is_unary_op(Token t) { return t.type == TT_BANG || t.type == TT_MINUS; }
+
 char *ttostr(Token t) {
     switch (t.type) {
     // single character tokens

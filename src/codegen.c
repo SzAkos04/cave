@@ -10,6 +10,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 static LLVMValueRef generate_literal_IR(Literal literal,
                                         LLVMContextRef context) {
@@ -30,6 +31,9 @@ static LLVMValueRef generate_literal_IR(Literal literal,
         LLVMTypeRef null_type = LLVMPointerType(LLVMInt32Type(), 0);
         return LLVMConstNull(null_type);
     }
+    default:
+        error("unknown literal");
+        return NULL;
     }
 }
 
@@ -46,29 +50,63 @@ static LLVMTypeRef generate_type_IR(Token token) {
 }
 
 LLVMValueRef generate_expression_IR(Expr expr, LLVMContextRef context,
-                                    LLVMModuleRef module) {
+                                    LLVMModuleRef module,
+                                    LLVMBuilderRef builder);
+
+LLVMValueRef generate_unary_IR(Expr expr, LLVMContextRef context,
+                               LLVMModuleRef module, LLVMBuilderRef builder) {
+    if (!expr.data.Unary.right) {
+        error("wut");
+        return NULL;
+    }
+    LLVMValueRef right = generate_expression_IR(*expr.data.Unary.right, context,
+                                                module, builder);
+    if (!right) {
+        return NULL;
+    }
+
+    switch (expr.data.Unary.operator.type) {
+    case TT_MINUS:
+        return LLVMBuildNeg(builder, right, "negtmp");
+    case TT_BANG:
+        return LLVMBuildNot(builder, right, "nottmp");
+    default:
+        error("unsupported unary operator");
+        return NULL;
+    }
+}
+
+LLVMValueRef generate_variable_IR(Expr expr, LLVMModuleRef module) {
+    char error_msg[64];
+    LLVMValueRef global = LLVMGetNamedGlobal(module, expr.data.Variable);
+    if (!global) {
+        sprintf(error_msg, "use of undeclared variable `%s`",
+                expr.data.Variable);
+        error(error_msg);
+        return NULL;
+    }
+    return LLVMGetInitializer(global);
+}
+
+LLVMValueRef generate_expression_IR(Expr expr, LLVMContextRef context,
+                                    LLVMModuleRef module,
+                                    LLVMBuilderRef builder) {
+    printf("%i\n", expr.type);
     switch (expr.type) {
     case EXPR_UNARY:
-        error("unary expressions not yet implemented");
-        return NULL;
+        return generate_unary_IR(expr, context, module, builder);
     case EXPR_BINARY:
         error("binary expressions not yet implemented");
         return NULL;
     case EXPR_LITERAL:
         return generate_literal_IR(expr.data.Literal, context);
-    case EXPR_VARIABLE: {
-        char error_msg[64];
-        LLVMValueRef global = LLVMGetNamedGlobal(module, expr.data.Variable);
-        if (!global) {
-            sprintf(error_msg, "use of undeclared variable `%s`",
-                    expr.data.Variable);
-            error(error_msg);
-            return NULL;
-        }
-        return LLVMGetInitializer(global);
-    }
+    case EXPR_VARIABLE:
+        return generate_variable_IR(expr, module);
     case EXPR_ASSIGNMENT:
         error("assignment expressions not yet implemented");
+        return NULL;
+    default:
+        error("unknown expression");
         return NULL;
     }
 }
@@ -78,15 +116,17 @@ static int generate_CONST_IR(Stmt stmt, LLVMContextRef context,
     LLVMValueRef value = NULL;
     switch (stmt.data.Const.type) {
     case CONST_I32: {
-        value = generate_expression_IR(stmt.data.Const.value, context, module);
+        value = generate_expression_IR(stmt.data.Const.value, context, module,
+                                       builder);
         if (!value) {
             return 1;
         }
-		LLVMTypeRef value_type = LLVMTypeOf(value);
-		if (!value_type) {
-			error("failed to get type of value");
-			return 1;
-		}
+
+        LLVMTypeRef value_type = LLVMTypeOf(value);
+        if (!value_type) {
+            error("failed to get type of value");
+            return 1;
+        }
         LLVMValueRef global_var = LLVMAddGlobal(module, LLVMTypeOf(value),
                                                 stmt.data.Const.name.data.Str);
         LLVMSetInitializer(global_var, value);
@@ -97,11 +137,10 @@ static int generate_CONST_IR(Stmt stmt, LLVMContextRef context,
 
         break;
     }
+    default:
+        error("other types of consts not yet implemented");
+        return 1;
     }
-    (void)stmt;
-    (void)context;
-    (void)module;
-    (void)builder;
     return 0;
 }
 
@@ -167,9 +206,9 @@ static int generate_FN_IR(Stmt stmt, LLVMContextRef context,
 static int generate_RETURN_IR(Stmt stmt, LLVMContextRef context,
                               LLVMModuleRef module, LLVMBuilderRef builder) {
 
-    LLVMValueRef ret_value =
-        generate_expression_IR(stmt.data.Return.value, context, module);
-    if (!ret_value) {
+    LLVMValueRef value = generate_expression_IR(stmt.data.Return.value, context,
+                                                module, builder);
+    if (!value) {
         return 1;
     }
 
@@ -179,10 +218,9 @@ static int generate_RETURN_IR(Stmt stmt, LLVMContextRef context,
         error("return statement found outside of a function");
         return 1;
     }
-
     // the return type is checked later, after codegen
 
-    LLVMBuildRet(builder, ret_value);
+    LLVMBuildRet(builder, value);
 
     return 0;
 }

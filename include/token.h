@@ -65,6 +65,7 @@ typedef struct {
 } Token;
 
 bool is_type(Token);
+bool is_unary_op(Token);
 
 char *ttostr(Token);
 

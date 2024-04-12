@@ -35,30 +35,47 @@ static Literal parse_literal(Parser *self) {
             };
         }
     case TT_IDENTIFIER:
-        return (Literal){.type = LITERAL_IDENTIFIER,
-                         .data.Identifier = self->tokens[self->current].lexeme};
+        return (Literal){
+            .type = LITERAL_IDENTIFIER,
+            .data.Identifier = self->tokens[self->current].lexeme,
+        };
     default:
         error("parsing literals not yet implemented");
-        return (Literal){
-            .type = LITERAL_NULL,
-            .data.null = NULL,
-        };
+        return (Literal){.type = LITERAL_NULL};
     }
+}
+
+static Expr parse_expr(Parser *self);
+
+static Expr parse_unary(Parser *self) {
+    Token op = self->tokens[self->current];
+    self->current++; // consume operator
+    Expr right = parse_expr(self);
+    return (Expr){
+        .type = EXPR_UNARY,
+        .data.Unary =
+            {
+                .operator= op,
+                .right = &right,
+            },
+    };
 }
 
 static Expr parse_expr(Parser *self) {
     // TODO: temporary
-    if (isdigit(self->tokens[self->current].lexeme[0])) {
+    if (is_unary_op(self->tokens[self->current])) {
+        return parse_unary(self);
+    } else if (isdigit(self->tokens[self->current].lexeme[0])) {
         return (Expr){
             .type = EXPR_LITERAL,
             .data.Literal = parse_literal(self),
         };
-    } else {
-        return (Expr){
-            .type = EXPR_VARIABLE,
-            .data.Variable = self->tokens[self->current].lexeme,
-        };
     }
+
+    return (Expr){
+        .type = EXPR_VARIABLE,
+        .data.Variable = self->tokens[self->current].lexeme,
+    };
 }
 
 static Stmt parse_fn(Parser *self) {
@@ -105,9 +122,11 @@ static Stmt parse_fn(Parser *self) {
     }
     self->current++; // consume `)`
 
-    Token ret_type = (Token){.type = TT_VOID,
-                             .lexeme = NULL,
-                             .line = self->tokens[self->current].line};
+    Token ret_type = (Token){
+        .type = TT_VOID,
+        .lexeme = NULL,
+        .line = self->tokens[self->current].line,
+    };
     if (is_type(self->tokens[self->current])) {
         ret_type = self->tokens[self->current];
         self->current++; // consume type
@@ -146,15 +165,18 @@ static Stmt parse_fn(Parser *self) {
     }
     self->current++; // consume `}`
 
-    return (Stmt){.type = STMT_FN,
-                  .data.Fn = {
-                      .name = name,
-                      .args = NULL,
-                      .arg_n = 0,
-                      .ret_type = ret_type,
-                      .stmts = stmts,
-                      .stmt_n = n,
-                  }};
+    return (Stmt){
+        .type = STMT_FN,
+        .data.Fn =
+            {
+                .name = name,
+                .args = NULL,
+                .arg_n = 0,
+                .ret_type = ret_type,
+                .stmts = stmts,
+                .stmt_n = n,
+            },
+    };
 }
 
 static Stmt parse_const(Parser *self) {
