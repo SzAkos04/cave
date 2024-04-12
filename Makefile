@@ -3,7 +3,7 @@ PROJECT := cave
 CFLAGS := -Wall -Wextra -Werror -Wpedantic
 # LLVM stuff
 CFLAGS += `llvm-config --cflags`
-LDFLAGS := `llvm-config --ldflags` -lm
+LDFLAGS := `llvm-config --ldflags`
 LIBS := `llvm-config --libs`
 
 INCLUDES := -Iinclude

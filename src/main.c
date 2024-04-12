@@ -6,7 +6,6 @@
 #include "stmt.h"
 
 #include <llvm-c/BitWriter.h>
-#include <llvm-c/Core.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +27,7 @@ int main(int argc, char **argv) {
         error("file does not exist");
         return 1;
     }
-    
+
     char *ext = strchr(path, '.');
     if (!ext) {
         error("file has no extension");
@@ -138,13 +137,13 @@ int main(int argc, char **argv) {
 
     // compile IR code
     if (system("llc -filetype=obj temp.ll -o temp.o") != 0) {
-        error("llc failed");
+        error("`llc` failed");
         remove("cave.ll");
         return 1;
     }
     remove("temp.ll");
     if (system("clang temp.o -o a.out") != 0) {
-        error("clang failed");
+        error("`clang` failed");
         remove("cave.o");
         return 1;
     }
